@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --mordobo-bg: #0F1117;
+  --mordobo-surface: #161821;
+  --mordobo-accent: #6C5CE7;
+}
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
+  background-color: var(--mordobo-bg);
+  color: #E8E9ED;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+}
