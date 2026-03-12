@@ -79,15 +79,13 @@ export async function fetchDashboardStats(): Promise<{
   }
 }
 
-/** Lista quejas/sugerencias. Cuando el backend exponga GET /api/admin/complaints devolverá datos reales. */
+/** List complaints/suggestions (legacy: returns array only). For full pagination use complaintsService.listComplaints. */
 export async function listComplaints(params?: { type?: string }): Promise<Complaint[]> {
   try {
-    const res = await api.get<Complaint[] | { data?: Complaint[]; complaints?: Complaint[] }>("/api/admin/complaints", {
-      params: params?.type && params.type !== "all" ? { type: params.type } : undefined,
+    const res = await api.get<{ data?: Complaint[] }>("/api/admin/complaints", {
+      params: params?.type && params.type !== "all" ? { type: params.type } : { limit: 500 },
     });
-    const body = res.data;
-    if (Array.isArray(body)) return body;
-    const list = body?.data ?? body?.complaints ?? [];
+    const list = res.data?.data ?? [];
     return Array.isArray(list) ? list : [];
   } catch {
     return [];
