@@ -21,7 +21,7 @@ export async function rejectProvider(id: string): Promise<{ provider: ProviderAp
   return { provider: data.provider };
 }
 
-/** Lista solicitudes de onboarding. Cuando el backend exponga GET /api/admin/onboarding devolverá datos reales. */
+/** List onboarding requests (uses GET /api/admin/onboarding). For full pagination/counts use onboardingService. */
 export async function listOnboardingRequests(params?: { status?: string }): Promise<OnboardingRequest[]> {
   try {
     const res = await api.get<{ requests?: OnboardingRequest[]; data?: OnboardingRequest[] }>("/api/admin/onboarding", {
