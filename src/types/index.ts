@@ -48,16 +48,58 @@ export interface OnboardingRequest {
   location: string;
 }
 
+export type ComplaintType = "complaint" | "claim" | "suggestion";
+export type ComplaintPriority = "critical" | "high" | "medium" | "low";
+export type ComplaintStatus = "open" | "in_progress" | "resolved" | "closed" | "escalated";
+
 export interface Complaint {
   id: string;
   from: string;
-  type: "complaint" | "claim" | "suggestion";
+  type: ComplaintType;
   role: string;
   subject: string;
   description?: string;
-  priority: "critical" | "high" | "medium" | "low";
+  priority: ComplaintPriority;
   status: string;
   date: string;
+  orderId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ComplaintMessage {
+  id: string;
+  complaintSuggestionId: string;
+  senderType: "client" | "provider" | "admin";
+  senderId: string;
+  messageText: string;
+  createdAt: string;
+}
+
+export interface ComplaintDetail extends Complaint {
+  submitterType?: string;
+  submitterId?: string;
+  isFlaggedForReview?: boolean;
+  resolvedAt?: string | null;
+}
+
+export interface ComplaintCounts {
+  all: number;
+  complaint: number;
+  claim: number;
+  suggestion: number;
+}
+
+export interface RelatedJob {
+  jobId: string;
+  providerId: string | null;
+  providerName: string | null;
+  providerEmail: string | null;
+  serviceId: string | null;
+  serviceName: string | null;
+  amount: number | null;
+  jobDate: string | null;
+  orderStatus: string | null;
 }
 
 export interface DashboardStats {
