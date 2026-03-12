@@ -48,6 +48,54 @@ export interface OnboardingRequest {
   location: string;
 }
 
+export interface OnboardingCounts {
+  all: number;
+  pending: number;
+  in_review: number;
+  approved: number;
+  rejected: number;
+}
+
+export interface OnboardingListParams {
+  status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface OnboardingListResponse {
+  data: OnboardingRequest[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}
+
+export interface OnboardingDetail extends OnboardingRequest {
+  applicationDate?: string;
+  email?: string;
+  phoneNumber?: string | null;
+  serviceCategoryId?: string | null;
+  adminNotes?: string;
+  reviewChecklist?: Record<string, boolean>;
+  rejectionReason?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface OnboardingDocumentItem {
+  id: string;
+  documentType: string;
+  fileName?: string | null;
+  mimeType?: string | null;
+  uploadedAt: string;
+}
+
+export interface OnboardingActivityItem {
+  id: string;
+  eventType: string;
+  details?: Record<string, unknown> | null;
+  adminId?: string | null;
+  createdAt: string;
+}
+
 export type ComplaintType = "complaint" | "claim" | "suggestion";
 export type ComplaintPriority = "critical" | "high" | "medium" | "low";
 export type ComplaintStatus = "open" | "in_progress" | "resolved" | "closed" | "escalated";

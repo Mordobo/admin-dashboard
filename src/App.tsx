@@ -39,6 +39,7 @@ function AppRoutes() {
       >
         <Route index element={<Dashboard />} />
         <Route path="onboarding" element={<Onboarding />} />
+        <Route path="onboarding/:id" element={<Onboarding />} />
         <Route path="complaints" element={<Complaints />} />
         <Route path="users" element={<Users />} />
         <Route path="providers" element={<Providers />} />
