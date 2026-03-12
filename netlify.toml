@@ -1,0 +1,16 @@
+# Mordobo Backoffice - Netlify
+# https://docs.netlify.com/configure-builds/file-based-configuration/
+
+[build]
+  command   = "npm run build"
+  publish   = "dist"
+
+# SPA: todas las rutas sirven index.html para React Router
+[[redirects]]
+  from    = "/*"
+  to      = "/index.html"
+  status  = 200
+
+# Variables de entorno: configurar en Netlify → Site settings → Environment variables
+# VITE_API_BASE_URL = https://mordobo-api-qa.onrender.com (o tu API)
+# VITE_ADMIN_SECRET = (opcional, para endpoints admin)
