@@ -205,3 +205,43 @@ export interface Banner {
   created_at?: string;
   updated_at?: string;
 }
+
+// --- Reports & Analytics ---
+export type ReportPeriod = "week" | "month" | "year" | "custom";
+
+export interface ReportsDateRange {
+  start: string;
+  end: string;
+}
+
+export interface ReportsKPIs {
+  newUsers: number;
+  newProviders: number;
+  jobsCompleted: number;
+  revenue: number;
+  avgRating: number;
+}
+
+export interface UserGrowthPoint {
+  date: string;
+  count: number;
+}
+
+export interface JobsByCategoryItem {
+  categoryName: string;
+  count: number;
+}
+
+export interface RevenuePoint {
+  date: string;
+  total: number;
+}
+
+export interface TopProviderRow {
+  rank: number;
+  providerId: string;
+  fullName: string;
+  email: string;
+  earnings: number;
+  orderCount: number;
+}
