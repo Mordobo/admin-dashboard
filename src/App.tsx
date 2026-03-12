@@ -15,6 +15,7 @@ import { Reports } from "@/pages/Reports";
 import { Transactions } from "@/pages/Transactions";
 import { ServicesCategories } from "@/pages/ServicesCategories";
 import { Providers } from "@/pages/Providers";
+import { Users } from "@/pages/Users";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,7 +40,7 @@ function AppRoutes() {
         <Route index element={<Dashboard />} />
         <Route path="onboarding" element={<Onboarding />} />
         <Route path="complaints" element={<Complaints />} />
-        <Route path="users" element={<Placeholder title="Users Management" />} />
+        <Route path="users" element={<Users />} />
         <Route path="providers" element={<Providers />} />
         <Route path="services" element={<ServicesCategories />} />
         <Route path="transactions" element={<Transactions />} />

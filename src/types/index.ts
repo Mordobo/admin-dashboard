@@ -459,3 +459,92 @@ export interface ReorderPayload {
   categoryIds?: string[];
   subcategoryOrders?: Record<string, string[]>;
 }
+
+// --- Users Management (Backoffice client accounts) ---
+export type ClientAccountStatus = "active" | "suspended" | "banned" | "pending";
+
+export interface ClientListItem {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  location: string | null;
+  registration_date: string;
+  status: string;
+}
+
+export interface ClientListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  sort_order?: "asc" | "desc";
+}
+
+export interface ClientProfile {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  phone_number: string | null;
+  phone_extension?: string | null;
+  country_code?: string | null;
+  country: string | null;
+  profile_image: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+}
+
+export interface ClientBookingItem {
+  id: string;
+  order_status: string;
+  total_amount: number | null;
+  scheduled_at: string | null;
+  created_at: string;
+  updated_at: string;
+  service_name: string | null;
+}
+
+export interface ClientReviewItem {
+  id: string;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  supplier_name: string | null;
+}
+
+export interface ClientPaymentMethodItem {
+  payment_method: string;
+}
+
+export interface ClientAddressItem {
+  id: string;
+  name?: string;
+  type?: string;
+  address_line1?: string;
+  city?: string;
+  state?: string;
+  postal_code?: string;
+  country?: string;
+  is_default?: boolean;
+}
+
+export interface ClientActivityLogEntry {
+  id: string;
+  action_type: string;
+  details: Record<string, unknown> | null;
+  created_at: string;
+  admin_email: string | null;
+  admin_name: string | null;
+}
+
+export interface ClientDetail {
+  profile: ClientProfile;
+  booking_history: ClientBookingItem[];
+  reviews_given: ClientReviewItem[];
+  payment_methods: ClientPaymentMethodItem[];
+  addresses: ClientAddressItem[];
+  activity_log: ClientActivityLogEntry[];
+}
