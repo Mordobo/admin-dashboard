@@ -1,42 +1,43 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FaqsSection } from "./content/FaqsSection";
 import { LegalSection } from "./content/LegalSection";
 import { NotificationsSection } from "./content/NotificationsSection";
 import { BannersSection } from "./content/BannersSection";
 
-const TABS = [
-  { id: "faqs", label: "FAQs", icon: "❓" },
-  { id: "legal", label: "Legal Documents", icon: "📜" },
-  { id: "notifications", label: "Push Notifications", icon: "🔔" },
-  { id: "banners", label: "Banners & Promotions", icon: "🖼️" },
-] as const;
+const TAB_IDS = ["faqs", "legal", "notifications", "banners"] as const;
+const TAB_ICONS: Record<(typeof TAB_IDS)[number], string> = {
+  faqs: "❓",
+  legal: "📜",
+  notifications: "🔔",
+  banners: "🖼️",
+};
 
-type TabId = (typeof TABS)[number]["id"];
+type TabId = (typeof TAB_IDS)[number];
 
 export function ContentManagement() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>("faqs");
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-mordobo-text m-0 mb-6">Content Management</h1>
-      <p className="text-mordobo-textSecondary text-sm m-0 mb-6">
-        Manage FAQs, legal documents, push notifications, and app banners. Content supports EN/ES.
-      </p>
+      <h1 className="text-2xl font-bold text-mordobo-text m-0 mb-6">{t("content.title")}</h1>
+      <p className="text-mordobo-textSecondary text-sm m-0 mb-6">{t("content.subtitle")}</p>
 
       <div className="flex flex-wrap gap-2 mb-6 border-b border-mordobo-border pb-4">
-        {TABS.map((tab) => (
+        {TAB_IDS.map((tabId) => (
           <button
-            key={tab.id}
+            key={tabId}
             type="button"
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => setActiveTab(tabId)}
             className={`flex items-center gap-2 py-2.5 px-4 rounded-xl text-sm font-medium border transition-colors ${
-              activeTab === tab.id
+              activeTab === tabId
                 ? "bg-mordobo-accentDim border-mordobo-accent/25 text-mordobo-accentLight"
                 : "bg-transparent border-mordobo-border text-mordobo-textSecondary hover:bg-mordobo-surfaceHover hover:text-mordobo-text"
             }`}
           >
-            <span>{tab.icon}</span>
-            {tab.label}
+            <span>{TAB_ICONS[tabId]}</span>
+            {t(`content.${tabId}`)}
           </button>
         ))}
       </div>

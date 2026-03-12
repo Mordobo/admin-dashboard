@@ -1,4 +1,5 @@
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { NAV_ITEMS } from "@/utils/constants";
 import { useState } from "react";
@@ -8,13 +9,14 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
+  const { t, i18n } = useTranslation();
   const location = useLocation();
   const { logout } = useAuth();
   const [search, setSearch] = useState("");
   const [notificationsCount] = useState(0);
 
   const current = NAV_ITEMS.find((n) => n.path === location.pathname || (n.path !== "/" && location.pathname.startsWith(n.path)));
-  const title = current ? `${current.icon} ${current.label}` : "Mordobo Backoffice";
+  const title = current ? `${current.icon} ${t(`nav.${current.id}`)}` : `Mordobo ${t("nav.backoffice")}`;
 
   return (
     <header className="sticky top-0 z-10 flex justify-between items-center gap-4 px-4 md:px-8 py-4 border-b border-mordobo-border bg-mordobo-surface">
@@ -39,19 +41,28 @@ export function Header({ onMenuClick }: HeaderProps) {
           </button>
           <input
             type="search"
-            placeholder="Search anything..."
+            placeholder={t("nav.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="py-2 px-4 w-[280px] bg-mordobo-bg border border-mordobo-border rounded-lg text-sm text-mordobo-text placeholder:text-mordobo-textMuted focus:outline-none focus:ring-2 focus:ring-mordobo-accent/50"
           />
         </div>
-        <button
-          type="button"
-          onClick={logout}
-          className="text-sm text-mordobo-textSecondary hover:text-mordobo-text px-2 py-1 rounded"
-        >
-          Logout
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => i18n.changeLanguage(i18n.language === "es" ? "en" : "es")}
+            className="text-xs font-medium text-mordobo-textMuted hover:text-mordobo-text px-2 py-1 rounded border border-mordobo-border hover:border-mordobo-accent/50"
+          >
+            {i18n.language === "es" ? "EN" : "ES"}
+          </button>
+          <button
+            type="button"
+            onClick={logout}
+            className="text-sm text-mordobo-textSecondary hover:text-mordobo-text px-2 py-1 rounded"
+          >
+            {t("nav.logout")}
+          </button>
+        </div>
       </div>
     </header>
   );

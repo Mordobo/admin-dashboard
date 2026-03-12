@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { NAV_ITEMS } from "@/utils/constants";
 import { useState } from "react";
@@ -12,13 +13,9 @@ function getInitials(name: string): string {
     .toUpperCase() || "?";
 }
 
-function roleLabel(role: string): string {
-  const labels: Record<string, string> = {
-    super_admin: "Super Admin",
-    admin: "Admin",
-    moderator: "Moderator",
-  };
-  return labels[role] ?? "Admin";
+function roleLabel(role: string, t: (key: string) => string): string {
+  const key = role === "super_admin" ? "nav.superAdmin" : role === "moderator" ? "nav.moderator" : "nav.admin";
+  return t(key);
 }
 
 interface SidebarProps {
@@ -27,11 +24,12 @@ interface SidebarProps {
 }
 
 export function Sidebar({ open = true, onClose }: SidebarProps) {
+  const { t } = useTranslation();
   const { auth } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const user = auth.user;
   const displayName = user?.full_name ?? "Admin";
-  const role = roleLabel(auth.role);
+  const role = roleLabel(auth.role, t);
 
   return (
     <>
@@ -51,7 +49,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
           type="button"
           onClick={() => setCollapsed((c) => !c)}
           className="p-1 rounded hover:bg-mordobo-surfaceHover text-mordobo-textSecondary"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? t("nav.expandSidebar") : t("nav.collapseSidebar")}
         >
           {collapsed ? "→" : "←"}
         </button>
@@ -62,7 +60,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
           {!collapsed && (
             <div className="min-w-0">
               <div className="text-base font-bold text-mordobo-text tracking-tight">Mordobo</div>
-              <div className="text-[10px] text-mordobo-textMuted uppercase tracking-widest">Backoffice</div>
+              <div className="text-[10px] text-mordobo-textMuted uppercase tracking-widest">{t("nav.backoffice")}</div>
             </div>
           )}
         </div>
@@ -83,7 +81,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
             end={item.path === "/"}
           >
             <span className="text-base shrink-0">{item.icon}</span>
-            {!collapsed && <span>{item.label}</span>}
+            {!collapsed && <span>{t(`nav.${item.id}`)}</span>}
           </NavLink>
         ))}
       </nav>

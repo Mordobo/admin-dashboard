@@ -297,3 +297,53 @@ export interface TransactionsListParams {
   sort_by?: string;
   sort_order?: "asc" | "desc";
 }
+
+// --- Service catalog (admin categories / subcategories) ---
+export interface ServiceCatalogSubcategory {
+  id: string;
+  category_id: string;
+  name: string;
+  name_en?: string | null;
+  name_es?: string | null;
+  name_key?: string | null;
+  icon?: string | null;
+  color?: string | null;
+  description_en?: string | null;
+  description_es?: string | null;
+  active: boolean;
+  sort_order: number;
+  provider_count?: number;
+}
+
+export interface ServiceCatalogCategory {
+  id: string;
+  name: string;
+  name_en?: string | null;
+  name_es?: string | null;
+  name_key?: string | null;
+  icon?: string | null;
+  color?: string | null;
+  description_en?: string | null;
+  description_es?: string | null;
+  active: boolean;
+  sort_order: number;
+  subcategories: ServiceCatalogSubcategory[];
+  provider_count?: number;
+}
+
+export interface CreateCategoryPayload {
+  name_en?: string;
+  name_es?: string;
+  name_key?: string;
+  icon?: string;
+  color?: string;
+  description_en?: string;
+  description_es?: string;
+  active?: boolean;
+  sort_order?: number;
+}
+
+export interface ReorderPayload {
+  categoryIds?: string[];
+  subcategoryOrders?: Record<string, string[]>;
+}
