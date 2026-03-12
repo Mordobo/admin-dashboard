@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
   LineChart,
@@ -39,6 +40,7 @@ function getReportParams(period: ReportPeriod, from: string, to: string) {
 }
 
 export function Reports() {
+  const { t } = useTranslation();
   const [period, setPeriod] = useState<ReportPeriod>("month");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -215,7 +217,7 @@ export function Reports() {
         </div>
 
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-          <h3 className="text-base font-semibold text-mordobo-text mb-4">Jobs per category</h3>
+          <h3 className="text-base font-semibold text-mordobo-text mb-4">{t("reports.jobsPerCategory")}</h3>
           <div className="h-[280px] w-full">
             {jobsByCategory.length === 0 ? (
               <p className="text-sm text-mordobo-textSecondary flex items-center h-full">No data for this period.</p>
