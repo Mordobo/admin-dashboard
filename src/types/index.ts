@@ -123,3 +123,85 @@ export interface AuditLogEntry {
   details: Record<string, unknown> | null;
   created_at: string;
 }
+
+// --- Content Management (CMS) ---
+export type ContentStatus = "published" | "draft";
+
+export interface FaqAnswer {
+  id: string;
+  question_id: string;
+  answer_en?: string;
+  answer_es?: string;
+  status?: ContentStatus;
+  order?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FaqQuestion {
+  id: string;
+  category_id: string;
+  question_en?: string;
+  question_es?: string;
+  status?: ContentStatus;
+  order?: number;
+  answers?: FaqAnswer[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface FaqCategory {
+  id: string;
+  title_en?: string;
+  title_es?: string;
+  status?: ContentStatus;
+  order?: number;
+  questions?: FaqQuestion[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export type LegalDocType = "terms_of_service" | "privacy_policy" | "provider_agreement" | "cookie_policy";
+
+export interface LegalDocument {
+  doc_type: LegalDocType;
+  body_html_en?: string;
+  body_html_es?: string;
+  updated_at?: string;
+}
+
+export interface LegalDocumentVersion {
+  id: string;
+  doc_type: LegalDocType;
+  created_at: string;
+  created_by?: string;
+}
+
+export interface SendNotificationRequest {
+  title: string;
+  body?: string;
+  target: "all" | "clients" | "providers" | "user";
+  user_id?: string;
+}
+
+export interface NotificationHistoryEntry {
+  id: string;
+  title: string;
+  body?: string;
+  target: string;
+  sent_at: string;
+  created_by?: string;
+}
+
+export interface Banner {
+  id: string;
+  title?: string;
+  image_url?: string;
+  link_url?: string;
+  status?: ContentStatus;
+  order?: number;
+  start_at?: string | null;
+  end_at?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}

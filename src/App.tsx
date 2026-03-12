@@ -10,6 +10,7 @@ import { Onboarding } from "@/pages/Onboarding";
 import { Complaints } from "@/pages/Complaints";
 import { Placeholder } from "@/pages/Placeholder";
 import { SystemSettings } from "@/pages/SystemSettings";
+import { ContentManagement } from "@/pages/ContentManagement";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,7 +40,7 @@ function AppRoutes() {
         <Route path="services" element={<Placeholder title="Services & Categories" />} />
         <Route path="transactions" element={<Placeholder title="Transactions" />} />
         <Route path="reports" element={<Placeholder title="Reports & Analytics" />} />
-        <Route path="content" element={<Placeholder title="Content Management" />} />
+        <Route path="content" element={<ContentManagement />} />
         <Route path="settings" element={<SystemSettings />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
