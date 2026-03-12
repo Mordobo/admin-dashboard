@@ -298,6 +298,118 @@ export interface TransactionsListParams {
   sort_order?: "asc" | "desc";
 }
 
+// --- Providers Management (Backoffice) ---
+export type ProviderStatus = "active" | "suspended" | "pending_verification" | "rejected";
+
+export interface ProviderListItem {
+  id: string;
+  name: string;
+  full_name?: string;
+  business_name?: string;
+  email: string;
+  service_category: string | null;
+  service_category_id: string | null;
+  location: string | null;
+  rating: number;
+  total_reviews: number;
+  total_jobs: number;
+  earnings: number;
+  status: string;
+  verified: boolean;
+  is_featured: boolean;
+  commission_rate: number | null;
+  profile_image_url?: string;
+}
+
+export interface ProviderListParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+  category?: string;
+  rating?: number;
+}
+
+export interface ProviderProfile {
+  id: string;
+  full_name: string | null;
+  business_name: string | null;
+  email: string | null;
+  phone_number: string | null;
+  service_category: string | null;
+  service_category_id: string | null;
+  bio: string | null;
+  location: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  profile_image_url?: string;
+  gallery: unknown;
+  years_experience: number | null;
+  hourly_rate: number | null;
+  rating: number;
+  total_reviews: number;
+  verified: boolean;
+  status: string;
+  availability: string | null;
+  response_time_hours: number | null;
+  is_featured: boolean;
+  commission_rate: number | null;
+  coverage_radius_km: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProviderServiceItem {
+  id: string;
+  name: string;
+  category_id: string | null;
+  category_name: string | null;
+  price: number | null;
+  duration_minutes: number | null;
+  is_active: boolean;
+}
+
+export interface ProviderJobHistoryItem {
+  id: string;
+  order_status: string;
+  total_amount: number | null;
+  payment_amount: number | null;
+  payment_status: string | null;
+  service_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProviderReviewItem {
+  id: string;
+  rating: number;
+  comment: string | null;
+  client_name: string | null;
+  created_at: string;
+}
+
+export interface ProviderDocumentItem {
+  document_type: string;
+  file_path: string;
+  file_name: string | null;
+  mime_type: string | null;
+}
+
+export interface ProviderEarningsBreakdown {
+  week: number;
+  month: number;
+  year: number;
+}
+
+export interface ProviderDetail {
+  profile: ProviderProfile;
+  services: ProviderServiceItem[];
+  job_history: ProviderJobHistoryItem[];
+  reviews: ProviderReviewItem[];
+  documents: ProviderDocumentItem[];
+  earnings_breakdown: ProviderEarningsBreakdown;
+}
+
 // --- Service catalog (admin categories / subcategories) ---
 export interface ServiceCatalogSubcategory {
   id: string;
