@@ -245,3 +245,55 @@ export interface TopProviderRow {
   earnings: number;
   orderCount: number;
 }
+
+// --- Transactions (Backoffice) ---
+export type TransactionStatus = "completed" | "pending" | "refunded" | "failed";
+
+export interface TransactionListItem {
+  id: string;
+  date: string;
+  client_id: string;
+  client_name: string | null;
+  client_email: string | null;
+  provider_id: string;
+  provider_name: string | null;
+  provider_email: string | null;
+  service_id: string | null;
+  service_name: string | null;
+  amount: number;
+  platform_fee: number;
+  status: TransactionStatus;
+  payment_method?: string;
+  refund_amount: number | null;
+  refund_reason: string | null;
+  refunded_at: string | null;
+  flag_for_review: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TransactionDetail extends TransactionListItem {
+  order_id: string;
+  job_reference: string;
+  payment_breakdown?: { line_items?: Array<{ description: string; amount: number }>; platform_fee?: number; subtotal?: number };
+}
+
+export interface TransactionsSummary {
+  totalRevenue: number;
+  platformFeesCollected: number;
+  refundsIssued: number;
+  pendingPayouts: number;
+}
+
+export interface TransactionsListParams {
+  start_date?: string;
+  end_date?: string;
+  status?: TransactionStatus;
+  min_amount?: number;
+  max_amount?: number;
+  user_search?: string;
+  page?: number;
+  limit?: number;
+  sort_by?: string;
+  sort_order?: "asc" | "desc";
+}

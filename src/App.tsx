@@ -12,6 +12,7 @@ import { Placeholder } from "@/pages/Placeholder";
 import { SystemSettings } from "@/pages/SystemSettings";
 import { ContentManagement } from "@/pages/ContentManagement";
 import { Reports } from "@/pages/Reports";
+import { Transactions } from "@/pages/Transactions";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -39,7 +40,7 @@ function AppRoutes() {
         <Route path="users" element={<Placeholder title="Users Management" />} />
         <Route path="providers" element={<Placeholder title="Providers Management" />} />
         <Route path="services" element={<Placeholder title="Services & Categories" />} />
-        <Route path="transactions" element={<Placeholder title="Transactions" />} />
+        <Route path="transactions" element={<Transactions />} />
         <Route path="reports" element={<Reports />} />
         <Route path="content" element={<ContentManagement />} />
         <Route path="settings" element={<SystemSettings />} />
