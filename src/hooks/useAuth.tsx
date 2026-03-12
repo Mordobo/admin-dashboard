@@ -9,7 +9,16 @@ import {
 } from "react";
 import * as authService from "@/services/authService";
 import type { AuthState, Role, User } from "@/types";
+import { isBackofficeRole } from "@/types";
 import { STORAGE_KEYS } from "@/utils/constants";
+
+/** Error cuando el login con la API es correcto pero el usuario no tiene rol de Backoffice. */
+export class BackofficeAccessDeniedError extends Error {
+  constructor() {
+    super("No tienes permisos para acceder al Backoffice.");
+    this.name = "BackofficeAccessDeniedError";
+  }
+}
 
 export type Login2FAPayload = { twoFaToken: string; email: string; user: User };
 
@@ -60,26 +69,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if ("requires_2fa" in res && res.requires_2fa) {
       return { twoFaToken: res.twoFaToken, email: res.email, user: res.user };
     }
-    const role: Role = (res.user as User & { role?: Role }).role ?? "admin";
-    authService.persistAuth(res.accessToken, res.refreshToken, res.user, role);
+    const apiRole = (res.user as User & { role?: Role }).role;
+    const devSuperAdminEmail = import.meta.env.VITE_DEV_SUPER_ADMIN_EMAIL as string | undefined;
+    const resolvedRole: Role | undefined =
+      isBackofficeRole(apiRole)
+        ? apiRole
+        : devSuperAdminEmail && res.user.email?.toLowerCase() === devSuperAdminEmail.trim().toLowerCase()
+          ? "super_admin"
+          : undefined;
+    if (!resolvedRole) {
+      throw new BackofficeAccessDeniedError();
+    }
+    authService.persistAuth(res.accessToken, res.refreshToken, res.user, resolvedRole);
     setAuth({
       accessToken: res.accessToken,
       refreshToken: res.refreshToken,
       user: res.user,
-      role,
+      role: resolvedRole,
     });
     return undefined;
   }, []);
 
   const completeLoginWith2FA = useCallback(async (twoFaToken: string, code: string) => {
     const res = await authService.validate2FA(twoFaToken, code);
-    const role: Role = (res.user as User & { role?: Role }).role ?? "admin";
-    authService.persistAuth(res.accessToken, res.refreshToken, res.user, role);
+    const apiRole = (res.user as User & { role?: Role }).role;
+    const devSuperAdminEmail = import.meta.env.VITE_DEV_SUPER_ADMIN_EMAIL as string | undefined;
+    const resolvedRole: Role | undefined =
+      isBackofficeRole(apiRole)
+        ? apiRole
+        : devSuperAdminEmail && res.user.email?.toLowerCase() === devSuperAdminEmail.trim().toLowerCase()
+          ? "super_admin"
+          : undefined;
+    if (!resolvedRole) {
+      throw new BackofficeAccessDeniedError();
+    }
+    authService.persistAuth(res.accessToken, res.refreshToken, res.user, resolvedRole);
     setAuth({
       accessToken: res.accessToken,
       refreshToken: res.refreshToken,
       user: res.user,
-      role,
+      role: resolvedRole,
     });
   }, []);
 

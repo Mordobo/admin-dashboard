@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { BackofficeAccessDeniedError } from "@/hooks/useAuth";
 import type { Login2FAPayload } from "@/hooks/useAuth";
 
 export function Login() {
@@ -28,6 +29,10 @@ export function Login() {
         navigate(from, { replace: true });
       }
     } catch (err: unknown) {
+      if (err instanceof BackofficeAccessDeniedError) {
+        setError(err.message);
+        return;
+      }
       const ax = err as { response?: { data?: { message?: string; code?: string } } };
       const msg = ax?.response?.data?.message ?? (ax?.response?.data?.code === "invalid_credentials" ? "Invalid credentials." : null);
       setError(msg || "Invalid credentials. Please try again.");
@@ -45,6 +50,10 @@ export function Login() {
       await completeLoginWith2FA(step2FA.twoFaToken, code2FA.trim());
       navigate(from, { replace: true });
     } catch (err: unknown) {
+      if (err instanceof BackofficeAccessDeniedError) {
+        setError(err.message);
+        return;
+      }
       const ax = err as { response?: { data?: { message?: string; code?: string } } };
       const msg = ax?.response?.data?.message ?? (ax?.response?.data?.code === "invalid_code" ? "Código incorrecto. Intenta de nuevo." : null);
       setError(msg || "Código incorrecto. Intenta de nuevo.");
