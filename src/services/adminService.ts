@@ -21,11 +21,14 @@ export async function rejectProvider(id: string): Promise<{ provider: ProviderAp
   return { provider: data.provider };
 }
 
-/** List onboarding requests (uses GET /api/admin/onboarding). For full pagination/counts use onboardingService. */
-export async function listOnboardingRequests(params?: { status?: string }): Promise<OnboardingRequest[]> {
+/** List onboarding requests (uses GET /api/admin/onboarding). Supports limit for dashboard recent list. */
+export async function listOnboardingRequests(params?: { status?: string; limit?: number }): Promise<OnboardingRequest[]> {
   try {
+    const query: { status?: string; limit?: number } = {};
+    if (params?.status && params.status !== "all") query.status = params.status;
+    if (params?.limit != null) query.limit = Math.min(100, Math.max(1, params.limit));
     const res = await api.get<{ requests?: OnboardingRequest[]; data?: OnboardingRequest[] }>("/api/admin/onboarding", {
-      params: params?.status && params.status !== "all" ? { status: params.status } : undefined,
+      params: Object.keys(query).length ? query : undefined,
     });
     const list = res.data?.requests ?? res.data?.data ?? [];
     return Array.isArray(list) ? list : [];
@@ -34,7 +37,7 @@ export async function listOnboardingRequests(params?: { status?: string }): Prom
   }
 }
 
-/** Estadísticas del dashboard. Valores en 0 si el backend no expone estos endpoints. */
+/** Dashboard KPIs from GET /api/admin/dashboard/stats. Falls back to zeros if the endpoint is unavailable. */
 export async function fetchDashboardStats(): Promise<{
   pendingOnboarding: number;
   openComplaints: number;
@@ -46,45 +49,38 @@ export async function fetchDashboardStats(): Promise<{
   activeProvidersChange?: number;
 }> {
   try {
-    const [onb, complaints, users, providers] = await Promise.allSettled([
-      api.get<{ total?: number; count?: number; change?: number } | number>("/api/admin/onboarding/stats").then((r) => r.data),
-      api.get<{ total?: number; change?: number } | number>("/api/admin/complaints/stats").then((r) => r.data),
-      api.get<{ count?: number; change?: number } | number>("/api/admin/users/count").then((r) => r.data),
-      api.get<{ count?: number; change?: number } | number>("/api/admin/providers/count").then((r) => r.data),
-    ]);
-    const num = (v: unknown): number => {
-      if (v == null) return 0;
-      if (typeof v === "number") return v;
-      if (typeof v === "object") {
-        const o = v as Record<string, unknown>;
-        if (typeof o.total === "number") return o.total;
-        if (typeof o.count === "number") return o.count;
-      }
-      return 0;
-    };
-    const change = (v: unknown): number | undefined =>
-      v != null && typeof v === "object" && "change" in v ? (v as { change?: number }).change : undefined;
+    const { data } = await api.get<{
+      pendingOnboarding: number;
+      openComplaints: number;
+      activeUsers: number;
+      activeProviders: number;
+      pendingOnboardingChange?: number;
+      openComplaintsChange?: number;
+      activeUsersChange?: number;
+      activeProvidersChange?: number;
+    }>("/api/admin/dashboard/stats");
     return {
-      pendingOnboarding: onb.status === "fulfilled" ? num(onb.value) : 0,
-      openComplaints: complaints.status === "fulfilled" ? num(complaints.value) : 0,
-      activeUsers: users.status === "fulfilled" ? num(users.value) : 0,
-      activeProviders: providers.status === "fulfilled" ? num(providers.value) : 0,
-      pendingOnboardingChange: onb.status === "fulfilled" ? change(onb.value) : undefined,
-      openComplaintsChange: complaints.status === "fulfilled" ? change(complaints.value) : undefined,
-      activeUsersChange: users.status === "fulfilled" ? change(users.value) : undefined,
-      activeProvidersChange: providers.status === "fulfilled" ? change(providers.value) : undefined,
+      pendingOnboarding: data?.pendingOnboarding ?? 0,
+      openComplaints: data?.openComplaints ?? 0,
+      activeUsers: data?.activeUsers ?? 0,
+      activeProviders: data?.activeProviders ?? 0,
+      pendingOnboardingChange: data?.pendingOnboardingChange,
+      openComplaintsChange: data?.openComplaintsChange,
+      activeUsersChange: data?.activeUsersChange,
+      activeProvidersChange: data?.activeProvidersChange,
     };
   } catch {
     return { pendingOnboarding: 0, openComplaints: 0, activeUsers: 0, activeProviders: 0 };
   }
 }
 
-/** List complaints/suggestions (legacy: returns array only). For full pagination use complaintsService.listComplaints. */
-export async function listComplaints(params?: { type?: string }): Promise<Complaint[]> {
+/** List complaints/suggestions. Use limit for dashboard recent list (e.g. limit: 5). */
+export async function listComplaints(params?: { type?: string; limit?: number }): Promise<Complaint[]> {
   try {
-    const res = await api.get<{ data?: Complaint[] }>("/api/admin/complaints", {
-      params: params?.type && params.type !== "all" ? { type: params.type } : { limit: 500 },
-    });
+    const query: { type?: string; limit?: number } = {};
+    if (params?.type && params.type !== "all") query.type = params.type;
+    query.limit = params?.limit != null ? Math.min(100, Math.max(1, params.limit)) : 500;
+    const res = await api.get<{ data?: Complaint[] }>("/api/admin/complaints", { params: query });
     const list = res.data?.data ?? [];
     return Array.isArray(list) ? list : [];
   } catch {
