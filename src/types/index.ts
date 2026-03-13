@@ -155,6 +155,10 @@ export interface DashboardStats {
   openComplaints: number;
   activeUsers: number;
   activeProviders: number;
+  pendingOnboardingChange?: number;
+  openComplaintsChange?: number;
+  activeUsersChange?: number;
+  activeProvidersChange?: number;
 }
 
 // --- System Settings ---
