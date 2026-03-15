@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/Badge";
 import {
   listAdminUsers,
@@ -11,11 +12,9 @@ import type { AdminUserSettings, Role } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
 
 const ROLES: Role[] = ["super_admin", "admin", "moderator"];
-const ROLE_LABELS: Record<Role, string> = {
-  super_admin: "Super Admin",
-  admin: "Admin",
-  moderator: "Moderator",
-};
+function getRoleLabelKey(r: Role): string {
+  return r === "super_admin" ? "nav.superAdmin" : r === "admin" ? "nav.admin" : "nav.moderator";
+}
 const STATUS_COLORS: Record<string, "success" | "warning" | "danger"> = {
   active: "success",
   invited: "warning",
@@ -23,6 +22,7 @@ const STATUS_COLORS: Record<string, "success" | "warning" | "danger"> = {
 };
 
 export function AdminUsersSection() {
+  const { t } = useTranslation();
   const { auth } = useAuth();
   const isSuperAdmin = auth.role === "super_admin";
   const queryClient = useQueryClient();
@@ -81,7 +81,7 @@ export function AdminUsersSection() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12 text-mordobo-textSecondary">
-        Loading admin users…
+        {t("settings.loadingAdminUsers")}
       </div>
     );
   }
@@ -89,24 +89,24 @@ export function AdminUsersSection() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-mordobo-text m-0">Admin Users</h2>
+        <h2 className="text-lg font-bold text-mordobo-text m-0">{t("settings.adminUsers")}</h2>
         {isSuperAdmin && (
           <button
             type="button"
             onClick={() => setInviteOpen(true)}
             className="py-2.5 px-5 bg-mordobo-accent text-white border-0 rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90"
           >
-            Invite admin
+            {t("settings.inviteAdmin")}
           </button>
         )}
       </div>
 
       {inviteOpen && (
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-          <h3 className="text-base font-semibold text-mordobo-text mb-4">Invite new administrator</h3>
+          <h3 className="text-base font-semibold text-mordobo-text mb-4">{t("settings.inviteNewAdministrator")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
-              <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">Email *</label>
+              <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">{t("login.email")} *</label>
               <input
                 type="email"
                 value={inviteEmail}
@@ -116,7 +116,7 @@ export function AdminUsersSection() {
               />
             </div>
             <div>
-              <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">Full name</label>
+              <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">{t("settings.fullName")}</label>
               <input
                 type="text"
                 value={inviteName}
@@ -126,21 +126,21 @@ export function AdminUsersSection() {
               />
             </div>
             <div>
-              <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">Role</label>
+              <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">{t("settings.role")}</label>
               <select
                 value={inviteRole}
                 onChange={(e) => setInviteRole(e.target.value as Role)}
                 className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
               >
                 {ROLES.map((r) => (
-                  <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                  <option key={r} value={r}>{t(getRoleLabelKey(r))}</option>
                 ))}
               </select>
             </div>
           </div>
           {inviteMutation.isError && (
             <p className="text-mordobo-danger text-sm mb-4">
-              {(inviteMutation.error as Error)?.message ?? "Failed to send invitation"}
+              {(inviteMutation.error as Error)?.message ?? t("settings.failedToSendInvitation")}
             </p>
           )}
           <div className="flex gap-3">
@@ -149,7 +149,7 @@ export function AdminUsersSection() {
               onClick={() => setInviteOpen(false)}
               className="py-2.5 px-5 bg-mordobo-surface border border-mordobo-border rounded-xl text-sm font-semibold text-mordobo-text cursor-pointer hover:bg-mordobo-surfaceHover"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="button"
@@ -157,7 +157,7 @@ export function AdminUsersSection() {
               disabled={inviteMutation.isPending || !inviteEmail.trim()}
               className="py-2.5 px-5 bg-mordobo-accent text-white border-0 rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90 disabled:opacity-50"
             >
-              {inviteMutation.isPending ? "Sending…" : "Send invitation"}
+              {inviteMutation.isPending ? t("settings.sendingInvitation") : t("settings.sendInvitation")}
             </button>
           </div>
         </div>
@@ -168,12 +168,12 @@ export function AdminUsersSection() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-mordobo-border">
-                <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">User</th>
-                <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">Role</th>
-                <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">Status</th>
-                <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">Last login</th>
+                <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">{t("settings.user")}</th>
+                <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">{t("settings.role")}</th>
+                <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">{t("common.status")}</th>
+                <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">{t("settings.lastLogin")}</th>
                 {isSuperAdmin && (
-                  <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">Actions</th>
+                  <th className="py-3.5 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">{t("common.actions")}</th>
                 )}
               </tr>
             </thead>
@@ -193,7 +193,7 @@ export function AdminUsersSection() {
                           className="py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-mordobo-text text-sm"
                         >
                           {ROLES.map((r) => (
-                            <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                            <option key={r} value={r}>{t(getRoleLabelKey(r))}</option>
                           ))}
                         </select>
                         <button
@@ -202,19 +202,19 @@ export function AdminUsersSection() {
                           disabled={updateMutation.isPending}
                           className="text-mordobo-accentLight text-sm hover:underline"
                         >
-                          Save
+                          {t("common.save")}
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingId(null)}
                           className="text-mordobo-textMuted text-sm hover:underline"
                         >
-                          Cancel
+                          {t("common.cancel")}
                         </button>
                       </div>
                     ) : (
                       <>
-                        <span className="text-mordobo-text">{ROLE_LABELS[user.role]}</span>
+                        <span className="text-mordobo-text">{t(getRoleLabelKey(user.role))}</span>
                         {isSuperAdmin && user.status === "active" && (
                           <button
                             type="button"
@@ -224,7 +224,7 @@ export function AdminUsersSection() {
                             }}
                             className="ml-2 text-mordobo-accentLight text-xs hover:underline"
                           >
-                            Edit
+                            {t("common.edit")}
                           </button>
                         )}
                       </>
@@ -245,7 +245,7 @@ export function AdminUsersSection() {
                           disabled={deactivateMutation.isPending}
                           className="text-mordobo-danger text-sm hover:underline disabled:opacity-50"
                         >
-                          Deactivate
+                          {t("settings.deactivate")}
                         </button>
                       )}
                     </td>
@@ -256,7 +256,7 @@ export function AdminUsersSection() {
           </table>
         </div>
         {users.length === 0 && (
-          <div className="py-12 text-center text-mordobo-textSecondary text-sm">No admin users yet.</div>
+          <div className="py-12 text-center text-mordobo-textSecondary text-sm">{t("settings.noAdminUsersYet")}</div>
         )}
       </div>
     </div>

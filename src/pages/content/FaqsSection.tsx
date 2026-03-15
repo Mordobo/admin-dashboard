@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/Badge";
 import {
   listFaqs,
@@ -20,6 +21,7 @@ const STATUS_LABELS: Record<ContentStatus, string> = { draft: "Draft", published
 const STATUS_COLORS: Record<ContentStatus, "warning" | "success"> = { draft: "warning", published: "success" };
 
 export function FaqsSection() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -174,13 +176,13 @@ export function FaqsSection() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-mordobo-text m-0">FAQs</h2>
+        <h2 className="text-lg font-bold text-mordobo-text m-0">{t("content.faqs")}</h2>
         <button
           type="button"
           onClick={() => setCategoryFormOpen(true)}
           className="py-2.5 px-5 bg-mordobo-accent text-white border-0 rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90"
         >
-          Add category
+          {t("content.addCategory")}
         </button>
       </div>
 
@@ -315,7 +317,7 @@ export function FaqsSection() {
                       }}
                       className="text-mordobo-accentLight text-sm hover:underline"
                     >
-                      Edit
+                      {t("common.edit")}
                     </button>
                     <button
                       type="button"
@@ -323,7 +325,7 @@ export function FaqsSection() {
                       disabled={deleteCategoryMutation.isPending}
                       className="text-mordobo-danger text-sm hover:underline disabled:opacity-50"
                     >
-                      Delete
+                      {t("common.delete")}
                     </button>
                   </>
                 )}
@@ -387,7 +389,7 @@ export function FaqsSection() {
                     }}
                     className="py-2 px-4 bg-mordobo-accentDim border border-mordobo-accent/25 text-mordobo-accentLight rounded-xl text-sm font-medium hover:opacity-90"
                   >
-                    Add question
+                    {t("content.addQuestion")}
                   </button>
                 </div>
 
@@ -425,7 +427,7 @@ export function FaqsSection() {
                         onClick={() => setAddingQuestionCategoryId(null)}
                         className="py-2 px-4 border border-mordobo-border rounded-xl text-sm text-mordobo-textSecondary hover:bg-mordobo-surfaceHover"
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                       <button
                         type="button"
@@ -433,7 +435,7 @@ export function FaqsSection() {
                         disabled={createQuestionMutation.isPending}
                         className="py-2 px-4 bg-mordobo-accent text-white rounded-xl text-sm font-medium disabled:opacity-50"
                       >
-                        {createQuestionMutation.isPending ? "Adding…" : "Add question"}
+                        {createQuestionMutation.isPending ? t("content.adding") : t("content.addQuestion")}
                       </button>
                     </div>
                   </div>
@@ -496,7 +498,7 @@ export function FaqsSection() {
                               }}
                               className="text-mordobo-accentLight text-xs hover:underline"
                             >
-                              Edit
+                              {t("common.edit")}
                             </button>
                             <button
                               type="button"
@@ -509,7 +511,7 @@ export function FaqsSection() {
                               disabled={deleteQuestionMutation.isPending}
                               className="text-mordobo-danger text-xs hover:underline"
                             >
-                              Delete
+                              {t("common.delete")}
                             </button>
                           </div>
                         </div>
@@ -571,7 +573,7 @@ export function FaqsSection() {
                                       }}
                                       className="text-mordobo-accentLight text-xs"
                                     >
-                                      Edit
+                                      {t("common.edit")}
                                     </button>
                                     <button
                                       type="button"
@@ -584,7 +586,7 @@ export function FaqsSection() {
                                       }
                                       className="text-mordobo-danger text-xs"
                                     >
-                                      Delete
+                                      {t("common.delete")}
                                     </button>
                                   </div>
                                 </>

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { getCategoriesTree } from "@/services/categoriesService";
 import {
   fetchProviders,
@@ -14,14 +15,6 @@ import type { ServiceCatalogCategory } from "@/types";
 import { Badge } from "@/components/Badge";
 import { StatCard } from "@/components/StatCard";
 
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "Active only" },
-  { value: "all", label: "All statuses" },
-  { value: "active", label: "Active" },
-  { value: "suspended", label: "Suspended" },
-  { value: "pending_verification", label: "Pending verification" },
-  { value: "rejected", label: "Rejected" },
-];
 
 function formatDate(iso: string): string {
   try {
@@ -61,6 +54,7 @@ function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" 
 }
 
 export function Providers() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ProviderListParams>({
     page: 1,
@@ -140,6 +134,15 @@ export function Providers() {
     });
   });
 
+  const statusOptions = [
+    { value: "", label: t("providers.activeOnly") },
+    { value: "all", label: t("providers.allStatuses") },
+    { value: "active", label: t("common.active") },
+    { value: "suspended", label: t("users.suspended") },
+    { value: "pending_verification", label: t("providers.pendingVerification") },
+    { value: "rejected", label: t("providers.rejected") },
+  ];
+
   const handleCommissionSubmit = useCallback(() => {
     if (!commissionModal) return;
     const v = commissionInput.trim();
@@ -151,14 +154,14 @@ export function Providers() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-mordobo-text">Providers Management</h1>
+        <h1 className="text-2xl font-bold text-mordobo-text">{t("providers.title")}</h1>
       </div>
 
       <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
         <div className="flex flex-wrap items-center gap-3 mb-6">
           <input
             type="search"
-            placeholder="Search by name or service"
+            placeholder={t("providers.searchPlaceholder")}
             value={filters.search ?? ""}
             onChange={(e) =>
               setFilters((f) => ({ ...f, search: e.target.value || undefined, page: 1 }))
@@ -172,7 +175,7 @@ export function Providers() {
             }
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none"
           >
-            {STATUS_OPTIONS.map((opt) => (
+            {statusOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -185,7 +188,7 @@ export function Providers() {
             }
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[180px]"
           >
-            <option value="">All categories</option>
+            <option value="">{t("providers.allCategories")}</option>
             {flatCategoryOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
@@ -197,7 +200,7 @@ export function Providers() {
             min={0}
             max={5}
             step={0.5}
-            placeholder="Min rating"
+            placeholder={t("providers.minRating")}
             value={filters.rating ?? ""}
             onChange={(e) =>
               setFilters((f) => ({
@@ -211,22 +214,22 @@ export function Providers() {
         </div>
 
         {listLoading ? (
-          <p className="text-mordobo-textSecondary py-8">Loading providers…</p>
+          <p className="text-mordobo-textSecondary py-8">{t("providers.loadingProviders")}</p>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-mordobo-border text-left text-mordobo-textSecondary">
-                    <th className="pb-3 pr-4 font-medium">ID</th>
-                    <th className="pb-3 pr-4 font-medium">Name</th>
-                    <th className="pb-3 pr-4 font-medium">Service Category</th>
-                    <th className="pb-3 pr-4 font-medium">Location</th>
+                    <th className="pb-3 pr-4 font-medium">{t("users.id")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("users.name")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("providers.serviceCategory")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("users.location")}</th>
                     <th className="pb-3 pr-4 font-medium text-right">Rating</th>
-                    <th className="pb-3 pr-4 font-medium text-right">Total Jobs</th>
-                    <th className="pb-3 pr-4 font-medium text-right">Earnings</th>
-                    <th className="pb-3 pr-4 font-medium">Status</th>
-                    <th className="pb-3 font-medium">Actions</th>
+                    <th className="pb-3 pr-4 font-medium text-right">{t("providers.totalJobs")}</th>
+                    <th className="pb-3 pr-4 font-medium text-right">{t("reports.earnings")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("common.status")}</th>
+                    <th className="pb-3 font-medium">{t("common.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -272,7 +275,7 @@ export function Providers() {
                             onClick={() => setDetailId(p.id)}
                             className="text-mordobo-accentLight text-xs font-medium hover:underline"
                           >
-                            View
+                            {t("providers.view")}
                           </button>
                           <button
                             type="button"
@@ -285,7 +288,7 @@ export function Providers() {
                             disabled={statusMutation.isPending}
                             className="text-mordobo-warning text-xs font-medium hover:underline disabled:opacity-50"
                           >
-                            {p.status === "suspended" ? "Activate" : "Suspend"}
+                            {p.status === "suspended" ? t("providers.activate") : t("providers.suspend")}
                           </button>
                           <button
                             type="button"
@@ -293,7 +296,7 @@ export function Providers() {
                             disabled={verifyMutation.isPending}
                             className="text-mordobo-textSecondary text-xs font-medium hover:underline disabled:opacity-50"
                           >
-                            {p.verified ? "Unverify" : "Verify"}
+                            {p.verified ? t("providers.unverify") : t("providers.verify")}
                           </button>
                           <button
                             type="button"
@@ -301,7 +304,7 @@ export function Providers() {
                             disabled={featureMutation.isPending}
                             className="text-mordobo-textSecondary text-xs font-medium hover:underline disabled:opacity-50"
                           >
-                            {p.is_featured ? "Unfeature" : "Feature"}
+                            {p.is_featured ? t("providers.unfeature") : t("providers.feature")}
                           </button>
                           <button
                             type="button"
@@ -313,7 +316,7 @@ export function Providers() {
                             }}
                             className="text-mordobo-textSecondary text-xs font-medium hover:underline"
                           >
-                            Commission
+                            {t("providers.commission")}
                           </button>
                         </div>
                       </td>
@@ -324,14 +327,14 @@ export function Providers() {
             </div>
             {providers.length === 0 && (
               <p className="text-mordobo-textSecondary py-8 text-center">
-                No providers match your filters.
+                {t("providers.noMatch")}
               </p>
             )}
 
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-mordobo-border">
                 <p className="text-sm text-mordobo-textSecondary">
-                  Page {page} of {totalPages} ({total} total)
+                  {t("providers.pageOf", { page, totalPages, total })}
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -340,7 +343,7 @@ export function Providers() {
                     disabled={page <= 1}
                     className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
                   >
-                    Previous
+                    {t("onboarding.previous")}
                   </button>
                   <button
                     type="button"
@@ -348,7 +351,7 @@ export function Providers() {
                     disabled={page >= totalPages}
                     className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
                   >
-                    Next
+                    {t("onboarding.next")}
                   </button>
                 </div>
               </div>
@@ -359,9 +362,9 @@ export function Providers() {
 
       {detailId && (
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-          <h2 className="text-lg font-semibold text-mordobo-text mb-4">Provider detail</h2>
+          <h2 className="text-lg font-semibold text-mordobo-text mb-4">{t("providers.providerDetail")}</h2>
           {detailLoading ? (
-            <p className="text-mordobo-textSecondary">Loading…</p>
+            <p className="text-mordobo-textSecondary">{t("common.loading")}</p>
           ) : detail ? (
             <ProviderDetailPanel
               detail={detail}
@@ -391,7 +394,7 @@ export function Providers() {
               featureMutationPending={featureMutation.isPending}
             />
           ) : (
-            <p className="text-mordobo-textSecondary">Provider not found.</p>
+            <p className="text-mordobo-textSecondary">{t("providers.providerNotFound")}</p>
           )}
         </div>
       )}
@@ -405,16 +408,16 @@ export function Providers() {
             className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6 shadow-xl max-w-sm w-full mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-mordobo-text mb-2">Edit commission rate</h3>
+            <h3 className="text-lg font-semibold text-mordobo-text mb-2">{t("providers.editCommissionRate")}</h3>
             <p className="text-sm text-mordobo-textSecondary mb-3">
-              Enter a value between 0 and 1 (e.g. 0.15 = 15%). Leave empty to use platform default.
+              {t("providers.commissionHelp")}
             </p>
             <input
               type="number"
               min={0}
               max={1}
               step={0.01}
-              placeholder="e.g. 0.15"
+              placeholder={t("providers.commissionPlaceholder")}
               value={commissionInput}
               onChange={(e) => setCommissionInput(e.target.value)}
               className="w-full rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none mb-4"
@@ -426,7 +429,7 @@ export function Providers() {
                 disabled={commissionMutation.isPending}
                 className="rounded-xl border border-mordobo-border px-4 py-2 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -434,7 +437,7 @@ export function Providers() {
                 disabled={commissionMutation.isPending}
                 className="rounded-xl bg-mordobo-accent text-white px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
               >
-                {commissionMutation.isPending ? "Saving…" : "Save"}
+                {commissionMutation.isPending ? t("providers.saving") : t("common.save")}
               </button>
             </div>
           </div>
@@ -465,6 +468,7 @@ function ProviderDetailPanel({
   verifyMutationPending: boolean;
   featureMutationPending: boolean;
 }) {
+  const { t } = useTranslation();
   const { profile, services, job_history, reviews, documents, earnings_breakdown } = detail;
   const name = profile.business_name?.trim() || profile.full_name || profile.email || "—";
 
@@ -485,8 +489,8 @@ function ProviderDetailPanel({
             <p className="text-sm text-mordobo-textSecondary">{profile.phone_number ?? "—"}</p>
             <div className="flex flex-wrap gap-2 mt-2">
               <Badge color={statusBadgeColor(profile.status)}>{profile.status}</Badge>
-              {profile.verified && <Badge color="accent">Verified</Badge>}
-              {profile.is_featured && <Badge color="warning">Featured</Badge>}
+              {profile.verified && <Badge color="accent">{t("providers.verified")}</Badge>}
+              {profile.is_featured && <Badge color="warning">{t("providers.featured")}</Badge>}
             </div>
           </div>
         </div>
@@ -495,7 +499,7 @@ function ProviderDetailPanel({
           onClick={onClose}
           className="rounded-xl border border-mordobo-border px-3 py-1.5 text-sm text-mordobo-textSecondary hover:bg-mordobo-surfaceHover"
         >
-          Close
+          {t("providers.close")}
         </button>
       </div>
 
@@ -506,7 +510,7 @@ function ProviderDetailPanel({
           disabled={statusMutationPending}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
-          {profile.status === "suspended" ? "Activate" : "Suspend"}
+          {profile.status === "suspended" ? t("providers.activate") : t("providers.suspend")}
         </button>
         <button
           type="button"
@@ -514,7 +518,7 @@ function ProviderDetailPanel({
           disabled={verifyMutationPending}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
-          {profile.verified ? "Unverify" : "Verify"}
+          {profile.verified ? t("providers.unverify") : t("providers.verify")}
         </button>
         <button
           type="button"
@@ -522,53 +526,53 @@ function ProviderDetailPanel({
           disabled={featureMutationPending}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
-          {profile.is_featured ? "Unfeature" : "Feature"}
+          {profile.is_featured ? t("providers.unfeature") : t("providers.feature")}
         </button>
         <button
           type="button"
           onClick={onEditCommission}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover"
         >
-          Edit commission ({profile.commission_rate != null ? `${(profile.commission_rate * 100).toFixed(0)}%` : "default"})
+          {profile.commission_rate != null ? `${t("providers.commission")} (${(profile.commission_rate * 100).toFixed(0)}%)` : t("providers.editCommissionDefault")}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <StatCard
           icon="📅"
-          label="Earnings (week)"
+          label={t("providers.earningsWeek")}
           value={formatMoney(earnings_breakdown.week)}
           color="accent"
         />
         <StatCard
           icon="📆"
-          label="Earnings (month)"
+          label={t("providers.earningsMonth")}
           value={formatMoney(earnings_breakdown.month)}
           color="success"
         />
         <StatCard
           icon="📊"
-          label="Earnings (year)"
+          label={t("providers.earningsYear")}
           value={formatMoney(earnings_breakdown.year)}
           color="info"
         />
       </div>
 
       <section>
-        <h4 className="text-sm font-semibold text-mordobo-text mb-2">Profile</h4>
+        <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("providers.profile")}</h4>
         <p className="text-sm text-mordobo-textSecondary">
-          {profile.bio || "No bio."} · Location: {profile.location ?? "—"} · Category:{" "}
+          {profile.bio || t("providers.noBio")} · {t("users.location")}: {profile.location ?? "—"} · {t("providers.serviceCategory")}:{" "}
           {profile.service_category ?? "—"}
         </p>
         {profile.hourly_rate != null && (
-          <p className="text-sm text-mordobo-textSecondary">Hourly rate: {formatMoney(profile.hourly_rate)}</p>
+          <p className="text-sm text-mordobo-textSecondary">{t("providers.hourlyRate")} {formatMoney(profile.hourly_rate)}</p>
         )}
       </section>
 
       <section>
-        <h4 className="text-sm font-semibold text-mordobo-text mb-2">Services offered</h4>
+        <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("providers.servicesOffered")}</h4>
         {services.length === 0 ? (
-          <p className="text-sm text-mordobo-textMuted">None</p>
+          <p className="text-sm text-mordobo-textMuted">{t("providers.none")}</p>
         ) : (
           <ul className="text-sm text-mordobo-textSecondary space-y-1">
             {services.map((svc) => (
@@ -582,18 +586,18 @@ function ProviderDetailPanel({
       </section>
 
       <section>
-        <h4 className="text-sm font-semibold text-mordobo-text mb-2">Job history</h4>
+        <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("providers.jobHistory")}</h4>
         {job_history.length === 0 ? (
-          <p className="text-sm text-mordobo-textMuted">No jobs yet</p>
+          <p className="text-sm text-mordobo-textMuted">{t("providers.noJobsYet")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-mordobo-border text-left text-mordobo-textSecondary">
-                  <th className="pb-2 pr-2 font-medium">Date</th>
-                  <th className="pb-2 pr-2 font-medium">Service</th>
-                  <th className="pb-2 pr-2 font-medium">Status</th>
-                  <th className="pb-2 font-medium text-right">Earnings</th>
+                  <th className="pb-2 pr-2 font-medium">{t("transactions.date")}</th>
+                  <th className="pb-2 pr-2 font-medium">{t("transactions.service")}</th>
+                  <th className="pb-2 pr-2 font-medium">{t("common.status")}</th>
+                  <th className="pb-2 font-medium text-right">{t("reports.earnings")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -614,9 +618,9 @@ function ProviderDetailPanel({
       </section>
 
       <section>
-        <h4 className="text-sm font-semibold text-mordobo-text mb-2">Reviews received</h4>
+        <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("providers.reviewsReceived")}</h4>
         {reviews.length === 0 ? (
-          <p className="text-sm text-mordobo-textMuted">No reviews yet</p>
+          <p className="text-sm text-mordobo-textMuted">{t("providers.noReviewsYet")}</p>
         ) : (
           <ul className="space-y-2">
             {reviews.slice(0, 10).map((r) => (
@@ -633,7 +637,7 @@ function ProviderDetailPanel({
 
       {documents.length > 0 && (
         <section>
-          <h4 className="text-sm font-semibold text-mordobo-text mb-2">Documents</h4>
+          <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("providers.documents")}</h4>
           <ul className="text-sm text-mordobo-textSecondary space-y-1">
             {documents.map((d, i) => (
               <li key={i}>

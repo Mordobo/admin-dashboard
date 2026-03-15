@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { listBanners, createBanner, updateBanner, deleteBanner } from "@/services/contentService";
 import { Badge } from "@/components/Badge";
 import type { Banner, ContentStatus } from "@/types";
@@ -12,6 +13,7 @@ const STATUS_COLORS: Record<ContentStatus, "warning" | "success"> = {
 };
 
 export function BannersSection() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -126,7 +128,7 @@ export function BannersSection() {
       {(formOpen || editingId) && (
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
           <h3 className="text-base font-semibold text-mordobo-text mb-4 m-0">
-            {editingId ? "Edit banner" : "New banner"}
+            {editingId ? t("content.editBanner") : t("content.newBanner")}
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
@@ -316,7 +318,7 @@ export function BannersSection() {
                       onClick={() => openEdit(banner)}
                       className="text-mordobo-accentLight text-sm hover:underline mr-2"
                     >
-                      Edit
+                      {t("common.edit")}
                     </button>
                     <button
                       type="button"
@@ -324,7 +326,7 @@ export function BannersSection() {
                       disabled={deleteMutation.isPending}
                       className="text-mordobo-danger text-sm hover:underline disabled:opacity-50"
                     >
-                      Delete
+                      {t("common.delete")}
                     </button>
                   </td>
                 </tr>
