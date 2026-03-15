@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   fetchUsers,
   fetchUser,
@@ -10,14 +11,6 @@ import {
 } from "@/services/usersService";
 import type { ClientListItem, ClientDetail, ClientListParams } from "@/types";
 import { Badge } from "@/components/Badge";
-
-const STATUS_OPTIONS: { value: string; label: string }[] = [
-  { value: "", label: "All statuses" },
-  { value: "active", label: "Active" },
-  { value: "suspended", label: "Suspended" },
-  { value: "banned", label: "Banned" },
-  { value: "pending", label: "Pending" },
-];
 
 function formatDate(iso: string): string {
   try {
@@ -48,6 +41,7 @@ function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" 
 }
 
 export function Users() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ClientListParams>({
     page: 1,
@@ -139,17 +133,25 @@ export function Users() {
     deleteMutation.mutate(deleteConfirmStep.id);
   }, [deleteConfirmStep, deleteTypeConfirm, deleteMutation]);
 
+  const statusOptions = [
+    { value: "", label: t("users.allStatuses") },
+    { value: "active", label: t("common.active") },
+    { value: "suspended", label: t("users.suspended") },
+    { value: "banned", label: t("users.banned") },
+    { value: "pending", label: t("users.pending") },
+  ];
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-mordobo-text">Users Management</h1>
+        <h1 className="text-2xl font-bold text-mordobo-text">{t("users.title")}</h1>
       </div>
 
       <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
         <div className="flex flex-wrap items-center gap-3 mb-6">
           <input
             type="search"
-            placeholder="Search by name or email"
+            placeholder={t("users.searchPlaceholder")}
             value={filters.search ?? ""}
             onChange={(e) =>
               setFilters((f) => ({ ...f, search: e.target.value || undefined, page: 1 }))
@@ -163,7 +165,7 @@ export function Users() {
             }
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none"
           >
-            {STATUS_OPTIONS.map((opt) => (
+            {statusOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -180,27 +182,27 @@ export function Users() {
             }
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none"
           >
-            <option value="desc">Newest first</option>
-            <option value="asc">Oldest first</option>
+            <option value="desc">{t("users.newestFirst")}</option>
+            <option value="asc">{t("users.oldestFirst")}</option>
           </select>
         </div>
 
         {listLoading ? (
-          <p className="text-mordobo-textSecondary py-8">Loading users…</p>
+          <p className="text-mordobo-textSecondary py-8">{t("users.loadingUsers")}</p>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-mordobo-border text-left text-mordobo-textSecondary">
-                    <th className="pb-3 pr-4 font-medium">ID</th>
-                    <th className="pb-3 pr-4 font-medium">Name</th>
-                    <th className="pb-3 pr-4 font-medium">Email</th>
-                    <th className="pb-3 pr-4 font-medium">Phone</th>
-                    <th className="pb-3 pr-4 font-medium">Location</th>
-                    <th className="pb-3 pr-4 font-medium">Registration Date</th>
-                    <th className="pb-3 pr-4 font-medium">Status</th>
-                    <th className="pb-3 font-medium">Actions</th>
+                    <th className="pb-3 pr-4 font-medium">{t("users.id")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("users.name")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("users.email")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("users.phone")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("users.location")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("users.registrationDate")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("common.status")}</th>
+                    <th className="pb-3 font-medium">{t("common.actions")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -229,7 +231,7 @@ export function Users() {
                             onClick={() => setDetailId(u.id)}
                             className="text-mordobo-accentLight text-xs font-medium hover:underline"
                           >
-                            View
+                            {t("users.view")}
                           </button>
                           <button
                             type="button"
@@ -246,8 +248,8 @@ export function Users() {
                             className="text-mordobo-warning text-xs font-medium hover:underline disabled:opacity-50"
                           >
                             {u.status === "suspended" || u.status === "banned"
-                              ? "Activate"
-                              : "Suspend"}
+                              ? t("users.activate")
+                              : t("users.suspend")}
                           </button>
                           <button
                             type="button"
@@ -256,7 +258,7 @@ export function Users() {
                             }
                             className="text-mordobo-textSecondary text-xs font-medium hover:underline"
                           >
-                            Notify
+                            {t("users.notify")}
                           </button>
                         </div>
                       </td>
@@ -267,14 +269,14 @@ export function Users() {
             </div>
             {users.length === 0 && (
               <p className="text-mordobo-textSecondary py-8 text-center">
-                No users match your filters.
+                {t("users.noMatch")}
               </p>
             )}
 
             {totalPages > 1 && (
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-mordobo-border">
                 <p className="text-sm text-mordobo-textSecondary">
-                  Page {page} of {totalPages} ({total} total)
+                  {t("users.pageOf", { page, totalPages, total })}
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -283,7 +285,7 @@ export function Users() {
                     disabled={page <= 1}
                     className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
                   >
-                    Previous
+                    {t("onboarding.previous")}
                   </button>
                   <button
                     type="button"
@@ -291,7 +293,7 @@ export function Users() {
                     disabled={page >= totalPages}
                     className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
                   >
-                    Next
+                    {t("onboarding.next")}
                   </button>
                 </div>
               </div>
@@ -302,9 +304,9 @@ export function Users() {
 
       {detailId && (
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-          <h2 className="text-lg font-semibold text-mordobo-text mb-4">User detail</h2>
+          <h2 className="text-lg font-semibold text-mordobo-text mb-4">{t("users.userDetail")}</h2>
           {detailLoading ? (
-            <p className="text-mordobo-textSecondary">Loading…</p>
+            <p className="text-mordobo-textSecondary">{t("common.loading")}</p>
           ) : detail ? (
             <UserDetailPanel
               detail={detail}
@@ -337,7 +339,7 @@ export function Users() {
               resetPasswordPending={resetPasswordMutation.isPending}
             />
           ) : (
-            <p className="text-mordobo-textSecondary">User not found.</p>
+            <p className="text-mordobo-textSecondary">{t("users.userNotFound")}</p>
           )}
         </div>
       )}
@@ -352,17 +354,17 @@ export function Users() {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-mordobo-text mb-2">
-              Send notification to {notifyModal.name}
+              {t("users.sendNotificationTo", { name: notifyModal.name })}
             </h3>
             <input
               type="text"
-              placeholder="Subject"
+              placeholder={t("users.subject")}
               value={notifySubject}
               onChange={(e) => setNotifySubject(e.target.value)}
               className="w-full rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none mb-3"
             />
             <textarea
-              placeholder="Message"
+              placeholder={t("users.message")}
               value={notifyMessage}
               onChange={(e) => setNotifyMessage(e.target.value)}
               rows={4}
@@ -375,7 +377,7 @@ export function Users() {
                 disabled={notifyMutation.isPending}
                 className="rounded-xl border border-mordobo-border px-4 py-2 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -383,7 +385,7 @@ export function Users() {
                 disabled={notifyMutation.isPending}
                 className="rounded-xl bg-mordobo-accent text-white px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
               >
-                {notifyMutation.isPending ? "Sending…" : "Send"}
+                {notifyMutation.isPending ? t("users.sending") : t("users.send")}
               </button>
             </div>
           </div>
@@ -407,12 +409,10 @@ export function Users() {
             {deleteConfirmStep.step === 1 ? (
               <>
                 <h3 className="text-lg font-semibold text-mordobo-text mb-2">
-                  Delete account?
+                  {t("users.deleteAccountConfirm")}
                 </h3>
                 <p className="text-sm text-mordobo-textSecondary mb-4">
-                  You are about to delete the account for <strong>{deleteConfirmStep.name}</strong>.
-                  This will soft-delete the user (they will not appear in the list and cannot log in).
-                  This action can be reversed by an administrator in the database.
+                  {t("users.deleteAccountMessage", { name: deleteConfirmStep.name })}
                 </p>
                 <div className="flex gap-2 justify-end">
                   <button
@@ -420,7 +420,7 @@ export function Users() {
                     onClick={() => setDeleteConfirmStep(null)}
                     className="rounded-xl border border-mordobo-border px-4 py-2 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     type="button"
@@ -429,20 +429,19 @@ export function Users() {
                     }
                     className="rounded-xl bg-mordobo-warning text-white px-4 py-2 text-sm font-medium hover:opacity-90"
                   >
-                    Continue
+                    {t("users.continue")}
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <h3 className="text-lg font-semibold text-mordobo-danger mb-2">Double confirmation</h3>
+                <h3 className="text-lg font-semibold text-mordobo-danger mb-2">{t("users.doubleConfirmation")}</h3>
                 <p className="text-sm text-mordobo-textSecondary mb-2">
-                  Type <strong>delete</strong> below to confirm deletion of{" "}
-                  <strong>{deleteConfirmStep.name}</strong>.
+                  {t("users.typeDeleteToConfirm", { name: deleteConfirmStep.name })}
                 </p>
                 <input
                   type="text"
-                  placeholder="Type delete"
+                  placeholder={t("users.typeDeletePlaceholder")}
                   value={deleteTypeConfirm}
                   onChange={(e) => setDeleteTypeConfirm(e.target.value)}
                   className="w-full rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none mb-4"
@@ -457,7 +456,7 @@ export function Users() {
                     disabled={deleteMutation.isPending}
                     className="rounded-xl border border-mordobo-border px-4 py-2 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
                   >
-                    Back
+                    {t("users.back")}
                   </button>
                   <button
                     type="button"
@@ -468,7 +467,7 @@ export function Users() {
                     }
                     className="rounded-xl bg-mordobo-danger text-white px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
                   >
-                    {deleteMutation.isPending ? "Deleting…" : "Delete account"}
+                    {deleteMutation.isPending ? t("users.deleting") : t("users.deleteAccountButton")}
                   </button>
                 </div>
               </>
@@ -499,6 +498,7 @@ function UserDetailPanel({
   statusMutationPending: boolean;
   resetPasswordPending: boolean;
 }) {
+  const { t } = useTranslation();
   const { profile, booking_history, reviews_given, payment_methods, addresses, activity_log } =
     detail;
   const name = profile.full_name || profile.email || "—";
@@ -532,7 +532,7 @@ function UserDetailPanel({
           onClick={onClose}
           className="rounded-xl border border-mordobo-border px-3 py-1.5 text-sm text-mordobo-textSecondary hover:bg-mordobo-surfaceHover"
         >
-          Close
+          {t("users.close")}
         </button>
       </div>
 
@@ -543,14 +543,14 @@ function UserDetailPanel({
           disabled={statusMutationPending}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
-          {profile.status === "suspended" || profile.status === "banned" ? "Activate" : "Suspend"}
+          {profile.status === "suspended" || profile.status === "banned" ? t("users.activate") : t("users.suspend")}
         </button>
         <button
           type="button"
           onClick={onNotify}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover"
         >
-          Send notification
+          {t("users.notify")}
         </button>
         <button
           type="button"
@@ -558,30 +558,30 @@ function UserDetailPanel({
           disabled={resetPasswordPending}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
-          {resetPasswordPending ? "Sending…" : "Reset password"}
+          {resetPasswordPending ? t("users.sending") : t("users.resetPassword")}
         </button>
         <button
           type="button"
           onClick={onDelete}
           className="rounded-xl border border-mordobo-danger/50 bg-mordobo-danger/10 px-3 py-1.5 text-sm text-mordobo-danger hover:bg-mordobo-danger/20"
         >
-          Delete account
+          {t("users.deleteAccountButton")}
         </button>
       </div>
 
       <section>
-        <h4 className="text-sm font-semibold text-mordobo-text mb-2">Booking history</h4>
+        <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("users.bookingHistory")}</h4>
         {booking_history.length === 0 ? (
-          <p className="text-sm text-mordobo-textMuted">No bookings yet</p>
+          <p className="text-sm text-mordobo-textMuted">{t("providers.noJobsYet")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-mordobo-border text-left text-mordobo-textSecondary">
-                  <th className="pb-2 pr-2 font-medium">Date</th>
-                  <th className="pb-2 pr-2 font-medium">Service</th>
-                  <th className="pb-2 pr-2 font-medium">Status</th>
-                  <th className="pb-2 font-medium text-right">Amount</th>
+                  <th className="pb-2 pr-2 font-medium">{t("transactions.date")}</th>
+                  <th className="pb-2 pr-2 font-medium">{t("transactions.service")}</th>
+                  <th className="pb-2 pr-2 font-medium">{t("common.status")}</th>
+                  <th className="pb-2 font-medium text-right">{t("transactions.amount")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -604,9 +604,9 @@ function UserDetailPanel({
       </section>
 
       <section>
-        <h4 className="text-sm font-semibold text-mordobo-text mb-2">Reviews given</h4>
+        <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("users.reviewsGiven")}</h4>
         {reviews_given.length === 0 ? (
-          <p className="text-sm text-mordobo-textMuted">No reviews yet</p>
+          <p className="text-sm text-mordobo-textMuted">{t("providers.noReviewsYet")}</p>
         ) : (
           <ul className="space-y-2">
             {reviews_given.slice(0, 10).map((r) => (
@@ -622,9 +622,9 @@ function UserDetailPanel({
       </section>
 
       <section>
-        <h4 className="text-sm font-semibold text-mordobo-text mb-2">Payment methods</h4>
+        <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("users.paymentMethods")}</h4>
         {payment_methods.length === 0 ? (
-          <p className="text-sm text-mordobo-textMuted">None recorded</p>
+          <p className="text-sm text-mordobo-textMuted">{t("providers.none")}</p>
         ) : (
           <ul className="text-sm text-mordobo-textSecondary space-y-1">
             {payment_methods.map((p, i) => (
@@ -636,7 +636,7 @@ function UserDetailPanel({
 
       {addresses.length > 0 && (
         <section>
-          <h4 className="text-sm font-semibold text-mordobo-text mb-2">Addresses</h4>
+          <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("users.addresses")}</h4>
           <ul className="text-sm text-mordobo-textSecondary space-y-1">
             {addresses.map((a) => (
               <li key={a.id}>
@@ -651,9 +651,9 @@ function UserDetailPanel({
       )}
 
       <section>
-        <h4 className="text-sm font-semibold text-mordobo-text mb-2">Activity log</h4>
+        <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("users.activityLog")}</h4>
         {activity_log.length === 0 ? (
-          <p className="text-sm text-mordobo-textMuted">No admin actions recorded</p>
+          <p className="text-sm text-mordobo-textMuted">{t("providers.none")}</p>
         ) : (
           <ul className="space-y-2">
             {activity_log.slice(0, 20).map((a) => (

@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { BackofficeAccessDeniedError } from "@/hooks/useAuth";
 import type { Login2FAPayload } from "@/hooks/useAuth";
 
 export function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -34,8 +36,8 @@ export function Login() {
         return;
       }
       const ax = err as { response?: { data?: { message?: string; code?: string } } };
-      const msg = ax?.response?.data?.message ?? (ax?.response?.data?.code === "invalid_credentials" ? "Invalid credentials." : null);
-      setError(msg || "Invalid credentials. Please try again.");
+      const msg = ax?.response?.data?.message ?? (ax?.response?.data?.code === "invalid_credentials" ? t("login.invalidCredentials") : null);
+      setError(msg || t("login.invalidCredentials"));
     } finally {
       setLoading(false);
     }
@@ -55,8 +57,8 @@ export function Login() {
         return;
       }
       const ax = err as { response?: { data?: { message?: string; code?: string } } };
-      const msg = ax?.response?.data?.message ?? (ax?.response?.data?.code === "invalid_code" ? "Código incorrecto. Intenta de nuevo." : null);
-      setError(msg || "Código incorrecto. Intenta de nuevo.");
+      const msg = ax?.response?.data?.message ?? (ax?.response?.data?.code === "invalid_code" ? t("login.invalidCode") : null);
+      setError(msg || t("login.invalidCode"));
     } finally {
       setLoading(false);
     }
@@ -84,14 +86,14 @@ export function Login() {
         <div className="bg-mordobo-card border border-mordobo-border rounded-2xl p-8">
           {step2FA ? (
             <>
-              <h2 className="text-lg font-semibold text-mordobo-text mb-2">Verificación en dos pasos</h2>
+              <h2 className="text-lg font-semibold text-mordobo-text mb-2">{t("login.twoFactorTitle")}</h2>
               <p className="text-sm text-mordobo-textSecondary mb-6">
-                Introduce el código de 6 dígitos de tu app de autenticación para {step2FA.email}
+                {t("login.twoFactorDescription", { email: step2FA.email })}
               </p>
               <form onSubmit={handleSubmit2FA} className="space-y-4">
                 <div>
                   <label htmlFor="code2fa" className="block text-sm font-medium text-mordobo-textSecondary mb-1.5">
-                    Código
+                    {t("login.code")}
                   </label>
                   <input
                     id="code2fa"
@@ -100,7 +102,7 @@ export function Login() {
                     autoComplete="one-time-code"
                     value={code2FA}
                     onChange={(e) => setCode2FA(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="000000"
+                    placeholder={t("login.codePlaceholder")}
                     maxLength={6}
                     className="w-full px-4 py-2.5 bg-mordobo-surface border border-mordobo-border rounded-lg text-mordobo-text text-center text-lg tracking-widest placeholder:text-mordobo-textMuted focus:outline-none focus:ring-2 focus:ring-mordobo-accent/50"
                   />
@@ -116,25 +118,25 @@ export function Login() {
                     onClick={handleBackToPassword}
                     className="flex-1 py-3 px-4 bg-mordobo-surface border border-mordobo-border text-mordobo-text rounded-xl font-semibold hover:bg-mordobo-surfaceHover"
                   >
-                    Atrás
+                    {t("login.back")}
                   </button>
                   <button
                     type="submit"
                     disabled={loading || code2FA.length !== 6}
                     className="flex-1 py-3 px-4 bg-mordobo-accent hover:bg-mordobo-accentLight text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? "Verificando…" : "Verificar"}
+                    {loading ? t("login.verifying") : t("login.verify")}
                   </button>
                 </div>
               </form>
             </>
           ) : (
             <>
-              <h2 className="text-lg font-semibold text-mordobo-text mb-6">Sign in</h2>
+              <h2 className="text-lg font-semibold text-mordobo-text mb-6">{t("login.signIn")}</h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-mordobo-textSecondary mb-1.5">
-                    Email
+                    {t("login.email")}
                   </label>
                   <input
                     id="email"
@@ -149,7 +151,7 @@ export function Login() {
                 </div>
                 <div>
                   <label htmlFor="password" className="block text-sm font-medium text-mordobo-textSecondary mb-1.5">
-                    Password
+                    {t("login.password")}
                   </label>
                   <input
                     id="password"
@@ -169,7 +171,7 @@ export function Login() {
                 )}
                 <div className="flex justify-end">
                   <Link to="/forgot-password" className="text-sm text-mordobo-accentLight hover:underline">
-                    Forgot password?
+                    {t("login.forgotPassword")}
                   </Link>
                 </div>
                 <button
@@ -177,7 +179,7 @@ export function Login() {
                   disabled={loading}
                   className="w-full py-3 px-4 bg-mordobo-accent hover:bg-mordobo-accentLight text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? "Signing in…" : "Sign in"}
+                  {loading ? t("login.signingIn") : t("login.signIn")}
                 </button>
               </form>
             </>

@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/Badge";
 import {
   listOnboardingApplications,
@@ -16,13 +17,20 @@ import {
 } from "@/services/onboardingService";
 import type { OnboardingDocumentItem } from "@/types";
 
-const CHECKLIST_ITEMS: { key: string; label: string }[] = [
-  { key: "identity_verified", label: "Identity verified" },
-  { key: "certifications_valid", label: "Certifications valid" },
-  { key: "background_check_clean", label: "Background check clean" },
-  { key: "service_area_confirmed", label: "Service area confirmed" },
-  { key: "profile_complete", label: "Profile complete" },
+const CHECKLIST_KEYS: string[] = [
+  "identity_verified",
+  "certifications_valid",
+  "background_check_clean",
+  "service_area_confirmed",
+  "profile_complete",
 ];
+const CHECKLIST_I18N: Record<string, string> = {
+  identity_verified: "onboarding.identityVerified",
+  certifications_valid: "onboarding.certificationsValid",
+  background_check_clean: "onboarding.backgroundCheckClean",
+  service_area_confirmed: "onboarding.serviceAreaConfirmed",
+  profile_complete: "onboarding.profileComplete",
+};
 
 const STATUS_COLORS: Record<string, "warning" | "info" | "success" | "danger"> = {
   pending: "warning",
@@ -32,6 +40,7 @@ const STATUS_COLORS: Record<string, "warning" | "info" | "success" | "danger"> =
 };
 
 export function Onboarding() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -164,10 +173,10 @@ export function Onboarding() {
             onClick={() => navigate("/onboarding")}
             className="text-mordobo-accentLight text-sm mb-5 cursor-pointer hover:underline bg-transparent border-0 p-0 font-inherit"
           >
-            ← Back to list
+            {t("onboarding.backToList")}
           </button>
           <div className="text-mordobo-textSecondary text-sm">
-            {detailLoading ? "Loading..." : "Application not found."}
+            {detailLoading ? t("onboarding.loading") : t("onboarding.applicationNotFound")}
           </div>
         </div>
       );
@@ -183,13 +192,13 @@ export function Onboarding() {
           onClick={() => navigate("/onboarding")}
           className="text-mordobo-accentLight text-sm mb-5 cursor-pointer hover:underline bg-transparent border-0 p-0 font-inherit"
         >
-          ← Back to list
+          {t("onboarding.backToList")}
         </button>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="lg:col-span-2 bg-mordobo-card border border-mordobo-border rounded-[14px] p-7">
             <div className="flex justify-between items-center mb-6">
               <h2 className="m-0 text-xl font-bold text-mordobo-text">
-                Application: {detail.id}
+                {t("onboarding.application")}: {detail.id}
               </h2>
               <Badge color={STATUS_COLORS[detail.status] ?? "info"}>
                 {detail.status.replace("_", " ")}
@@ -197,10 +206,10 @@ export function Onboarding() {
             </div>
             <div className="grid grid-cols-2 gap-5 mb-7">
               {[
-                ["Full Name", detail.name],
-                ["Service Category", detail.service],
-                ["Location", detail.location],
-                ["Application Date", detail.date || detail.applicationDate],
+                [t("onboarding.fullName"), detail.name],
+                [t("onboarding.serviceCategory"), detail.service],
+                [t("onboarding.location"), detail.location],
+                [t("onboarding.applicationDate"), detail.date || detail.applicationDate],
               ].map(([label, val]) => (
                 <div key={String(label)}>
                   <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
@@ -214,11 +223,11 @@ export function Onboarding() {
             </div>
             <div className="mb-6">
               <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-3">
-                Submitted Documents ({documents.length})
+                {t("onboarding.submittedDocuments")} ({documents.length})
               </div>
               {documents.length === 0 ? (
                 <div className="text-[13px] text-mordobo-textSecondary py-2">
-                  No documents uploaded.
+                  {t("onboarding.noDocumentsUploaded")}
                 </div>
               ) : (
                 documents.map((doc) => (
@@ -235,7 +244,7 @@ export function Onboarding() {
                       onClick={() => handleViewDocument(id, doc)}
                       className="text-xs text-mordobo-accentLight cursor-pointer hover:underline bg-transparent border-0 font-inherit"
                     >
-                      View ↗
+                      {t("onboarding.view")}
                     </button>
                   </div>
                 ))
@@ -243,7 +252,7 @@ export function Onboarding() {
             </div>
             <div className="mb-6">
               <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-3">
-                Admin Notes
+                {t("onboarding.adminNotes")}
               </div>
               <textarea
                 value={notesDraft}
@@ -253,7 +262,7 @@ export function Onboarding() {
                     saveNotesMutation.mutate({ applicationId: id, notes: notesDraft });
                   }
                 }}
-                placeholder="Add review notes here..."
+                placeholder={t("onboarding.adminNotesPlaceholder")}
                 className="w-full min-h-[100px] bg-mordobo-surface border border-mordobo-border rounded-xl p-3.5 text-mordobo-text text-[13px] resize-y box-border"
               />
             </div>
@@ -268,7 +277,7 @@ export function Onboarding() {
                   disabled={approveMutation.isPending}
                   className="flex-1 py-3 px-5 bg-mordobo-success text-white border-0 rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90 disabled:opacity-50"
                 >
-                  ✓ Approve Application
+                  {t("onboarding.approveApplication")}
                 </button>
                 <button
                   type="button"
@@ -279,7 +288,7 @@ export function Onboarding() {
                   disabled={rejectMutation.isPending}
                   className="flex-1 py-3 px-5 bg-mordobo-danger text-white border-0 rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90 disabled:opacity-50"
                 >
-                  ✗ Reject Application
+                  {t("onboarding.rejectApplication")}
                 </button>
               </div>
             )}
@@ -287,9 +296,9 @@ export function Onboarding() {
           <div className="space-y-4">
             <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
               <h3 className="m-0 mb-4 text-sm font-semibold text-mordobo-text">
-                Review Checklist
+                {t("onboarding.reviewChecklist")}
               </h3>
-              {CHECKLIST_ITEMS.map(({ key, label }) => (
+              {CHECKLIST_KEYS.map((key) => (
                 <label
                   key={key}
                   className="flex items-center gap-2.5 py-2 text-[13px] text-mordobo-textSecondary cursor-pointer border-b border-mordobo-border last:border-0"
@@ -303,17 +312,17 @@ export function Onboarding() {
                     }
                     disabled={!canAct}
                   />
-                  {label}
+                  {t(CHECKLIST_I18N[key])}
                 </label>
               ))}
             </div>
             <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
               <h3 className="m-0 mb-4 text-sm font-semibold text-mordobo-text">
-                Activity Log
+                {t("onboarding.activityLog")}
               </h3>
               {activity.length === 0 ? (
                 <div className="text-[13px] text-mordobo-textSecondary py-2">
-                  No activity recorded.
+                  {t("onboarding.noActivityRecorded")}
                 </div>
               ) : (
                 <ul className="list-none p-0 m-0 space-y-2">
@@ -340,10 +349,10 @@ export function Onboarding() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6 max-w-md w-full mx-4 shadow-xl">
               <h3 className="m-0 mb-3 text-lg font-semibold text-mordobo-text">
-                Approve application?
+                {t("onboarding.approveApplicationConfirm")}
               </h3>
               <p className="text-sm text-mordobo-textSecondary mb-4">
-                This will create a provider account and update the application status.
+                {t("onboarding.approveApplicationMessage")}
               </p>
               <div className="flex gap-3 justify-end">
                 <button
@@ -354,7 +363,7 @@ export function Onboarding() {
                   }}
                   className="py-2 px-4 bg-mordobo-surface text-mordobo-text border border-mordobo-border rounded-lg text-sm cursor-pointer hover:bg-mordobo-surfaceHover"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="button"
@@ -367,7 +376,7 @@ export function Onboarding() {
                   disabled={approveMutation.isPending}
                   className="py-2 px-4 bg-mordobo-success text-white border-0 rounded-lg text-sm font-medium cursor-pointer hover:opacity-90 disabled:opacity-50"
                 >
-                  {approveMutation.isPending ? "Approving..." : "Approve"}
+                  {approveMutation.isPending ? t("onboarding.approving") : t("onboarding.approveButton")}
                 </button>
               </div>
             </div>
@@ -378,15 +387,15 @@ export function Onboarding() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6 max-w-md w-full mx-4 shadow-xl">
               <h3 className="m-0 mb-3 text-lg font-semibold text-mordobo-text">
-                Reject application?
+                {t("onboarding.rejectApplicationConfirm")}
               </h3>
               <p className="text-sm text-mordobo-textSecondary mb-2">
-                The applicant will be notified. Optionally provide a reason:
+                {t("onboarding.rejectReasonPlaceholder")}
               </p>
               <textarea
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Rejection reason (optional)"
+                placeholder={t("onboarding.rejectionReasonOptional")}
                 className="w-full min-h-[80px] bg-mordobo-surface border border-mordobo-border rounded-lg p-3 text-mordobo-text text-[13px] resize-y mb-4"
               />
               <div className="flex gap-3 justify-end">
@@ -399,7 +408,7 @@ export function Onboarding() {
                   }}
                   className="py-2 px-4 bg-mordobo-surface text-mordobo-text border border-mordobo-border rounded-lg text-sm cursor-pointer hover:bg-mordobo-surfaceHover"
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
                 <button
                   type="button"
@@ -412,7 +421,7 @@ export function Onboarding() {
                   disabled={rejectMutation.isPending}
                   className="py-2 px-4 bg-mordobo-danger text-white border-0 rounded-lg text-sm font-medium cursor-pointer hover:opacity-90 disabled:opacity-50"
                 >
-                  {rejectMutation.isPending ? "Rejecting..." : "Reject"}
+                  {rejectMutation.isPending ? t("onboarding.rejecting") : t("onboarding.rejectButton")}
                 </button>
               </div>
             </div>
@@ -459,7 +468,7 @@ export function Onboarding() {
           </span>
           <input
             type="search"
-            placeholder="Search by name, service, or ID..."
+            placeholder={t("onboarding.searchPlaceholder")}
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -472,18 +481,18 @@ export function Onboarding() {
       <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] overflow-hidden">
         {listLoading ? (
           <div className="py-12 text-center text-mordobo-textSecondary text-sm">
-            Loading...
+            {t("onboarding.loading")}
           </div>
         ) : list.length === 0 ? (
           <div className="py-12 text-center text-mordobo-textSecondary text-sm">
-            No applications match your filters.
+            {t("onboarding.noApplicationsMatch")}
           </div>
         ) : (
           <>
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-mordobo-border">
-                  {["ID", "Applicant", "Service", "Location", "Documents", "Date", "Status", "Actions"].map(
+                  {[t("onboarding.id"), t("onboarding.applicant"), t("onboarding.serviceCategory"), t("onboarding.location"), t("onboarding.documents"), t("onboarding.date"), t("common.status"), t("onboarding.actions")].map(
                     (h) => (
                       <th
                         key={h}
@@ -515,7 +524,7 @@ export function Onboarding() {
                       {req.location}
                     </td>
                     <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary">
-                      {req.documents} files
+                      {req.documents} {t("onboarding.files")}
                     </td>
                     <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary">
                       {req.date ? new Date(req.date).toLocaleDateString() : "—"}
@@ -531,7 +540,7 @@ export function Onboarding() {
                         onClick={() => navigate(`/onboarding/${req.id}`)}
                         className="py-1.5 px-3 bg-mordobo-accentDim text-mordobo-accentLight border-0 rounded-md text-xs cursor-pointer font-medium"
                       >
-                        Review
+                        {t("onboarding.review")}
                       </button>
                     </td>
                   </tr>
@@ -541,7 +550,7 @@ export function Onboarding() {
             {pagination.totalPages > 1 && (
               <div className="flex items-center justify-between py-3 px-4 border-t border-mordobo-border text-sm text-mordobo-textSecondary">
                 <span>
-                  Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+                  {t("onboarding.pageOf", { page: pagination.page, totalPages: pagination.totalPages, total: pagination.total })}
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -550,7 +559,7 @@ export function Onboarding() {
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     className="py-1.5 px-3 rounded-lg border border-mordobo-border bg-mordobo-surface text-mordobo-text cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Previous
+                    {t("onboarding.previous")}
                   </button>
                   <button
                     type="button"
@@ -558,7 +567,7 @@ export function Onboarding() {
                     onClick={() => setPage((p) => p + 1)}
                     className="py-1.5 px-3 rounded-lg border border-mordobo-border bg-mordobo-surface text-mordobo-text cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Next
+                    {t("onboarding.next")}
                   </button>
                 </div>
               </div>

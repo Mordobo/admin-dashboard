@@ -25,12 +25,6 @@ import {
 } from "@/services/reportsService";
 import type { ReportPeriod } from "@/types";
 
-const PERIOD_OPTIONS: { value: ReportPeriod; label: string }[] = [
-  { value: "week", label: "This week" },
-  { value: "month", label: "This month" },
-  { value: "year", label: "This year" },
-  { value: "custom", label: "Custom range" },
-];
 
 function getReportParams(period: ReportPeriod, from: string, to: string) {
   if (period === "custom" && from && to) {
@@ -38,6 +32,13 @@ function getReportParams(period: ReportPeriod, from: string, to: string) {
   }
   return { period: period === "custom" ? "month" : period };
 }
+
+const PERIOD_OPTIONS: { value: ReportPeriod; labelKey: string }[] = [
+  { value: "week", labelKey: "reports.thisWeek" },
+  { value: "month", labelKey: "reports.thisMonth" },
+  { value: "year", labelKey: "reports.thisYear" },
+  { value: "custom", labelKey: "reports.customRange" },
+];
 
 export function Reports() {
   const { t } = useTranslation();
@@ -109,7 +110,7 @@ export function Reports() {
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold text-mordobo-text">Reports & Analytics</h1>
+        <h1 className="text-2xl font-bold text-mordobo-text">{t("reports.title")}</h1>
         <div className="flex flex-wrap items-center gap-3">
           <select
             value={period}
@@ -118,7 +119,7 @@ export function Reports() {
           >
             {PERIOD_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey)}
               </option>
             ))}
           </select>
@@ -130,7 +131,7 @@ export function Reports() {
                 onChange={(e) => setCustomFrom(e.target.value)}
                 className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none"
               />
-              <span className="text-mordobo-textSecondary">to</span>
+              <span className="text-mordobo-textSecondary">{t("transactions.to")}</span>
               <input
                 type="date"
                 value={customTo}
@@ -145,35 +146,35 @@ export function Reports() {
               onClick={() => handleExport("csv")}
               className="rounded-xl border border-mordobo-border bg-mordobo-card px-4 py-2 text-sm font-medium text-mordobo-text hover:bg-mordobo-surfaceHover"
             >
-              Export CSV
+              {t("reports.exportCsv")}
             </button>
             <button
               type="button"
               onClick={() => handleExport("pdf")}
               className="rounded-xl bg-mordobo-accent px-4 py-2 text-sm font-medium text-white hover:opacity-90"
             >
-              Export PDF
+              {t("reports.exportPdf")}
             </button>
           </div>
         </div>
       </div>
 
       {kpisLoading ? (
-        <p className="text-mordobo-textSecondary">Loading metrics…</p>
+        <p className="text-mordobo-textSecondary">{t("reports.loadingMetrics")}</p>
       ) : (
         <div className="flex flex-wrap gap-4">
-          <StatCard icon="👥" label="New Users" value={k.newUsers} color="accent" />
-          <StatCard icon="🔧" label="New Providers" value={k.newProviders} color="info" />
-          <StatCard icon="✅" label="Jobs Completed" value={k.jobsCompleted} color="success" />
+          <StatCard icon="👥" label={t("reports.newUsers")} value={k.newUsers} color="accent" />
+          <StatCard icon="🔧" label={t("reports.newProviders")} value={k.newProviders} color="info" />
+          <StatCard icon="✅" label={t("reports.jobsCompleted")} value={k.jobsCompleted} color="success" />
           <StatCard
             icon="💰"
-            label="Revenue"
+            label={t("reports.revenue")}
             value={`$${k.revenue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
             color="success"
           />
           <StatCard
             icon="⭐"
-            label="Avg Rating"
+            label={t("reports.avgRating")}
             value={k.avgRating.toFixed(1)}
             color="warning"
           />
@@ -182,10 +183,10 @@ export function Reports() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-          <h3 className="text-base font-semibold text-mordobo-text mb-4">User growth</h3>
+          <h3 className="text-base font-semibold text-mordobo-text mb-4">{t("reports.userGrowth")}</h3>
           <div className="h-[280px] w-full">
             {userSeries.length === 0 ? (
-              <p className="text-sm text-mordobo-textSecondary flex items-center h-full">No data for this period.</p>
+              <p className="text-sm text-mordobo-textSecondary flex items-center h-full">{t("reports.noDataForPeriod")}</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={userSeries} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -220,7 +221,7 @@ export function Reports() {
           <h3 className="text-base font-semibold text-mordobo-text mb-4">{t("reports.jobsPerCategory")}</h3>
           <div className="h-[280px] w-full">
             {jobsByCategory.length === 0 ? (
-              <p className="text-sm text-mordobo-textSecondary flex items-center h-full">No data for this period.</p>
+              <p className="text-sm text-mordobo-textSecondary flex items-center h-full">{t("reports.noDataForPeriod")}</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
@@ -249,10 +250,10 @@ export function Reports() {
       </div>
 
       <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-        <h3 className="text-base font-semibold text-mordobo-text mb-4">Revenue trend</h3>
+        <h3 className="text-base font-semibold text-mordobo-text mb-4">{t("reports.revenueTrend")}</h3>
         <div className="h-[280px] w-full">
           {revenueSeries.length === 0 ? (
-            <p className="text-sm text-mordobo-textSecondary flex items-center h-full">No data for this period.</p>
+            <p className="text-sm text-mordobo-textSecondary flex items-center h-full">{t("reports.noDataForPeriod")}</p>
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={revenueSeries} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -287,19 +288,19 @@ export function Reports() {
       </div>
 
       <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-        <h3 className="text-base font-semibold text-mordobo-text mb-4">Top providers by revenue</h3>
+        <h3 className="text-base font-semibold text-mordobo-text mb-4">{t("reports.topProvidersByRevenue")}</h3>
         {topProviders.length === 0 ? (
-          <p className="text-sm text-mordobo-textSecondary py-4">No data for this period.</p>
+          <p className="text-sm text-mordobo-textSecondary py-4">{t("reports.noDataForPeriod")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-mordobo-border text-left text-mordobo-textSecondary">
                   <th className="pb-3 pr-4 font-medium">#</th>
-                  <th className="pb-3 pr-4 font-medium">Name</th>
-                  <th className="pb-3 pr-4 font-medium">Email</th>
-                  <th className="pb-3 pr-4 font-medium text-right">Orders</th>
-                  <th className="pb-3 font-medium text-right">Earnings</th>
+                  <th className="pb-3 pr-4 font-medium">{t("users.name")}</th>
+                  <th className="pb-3 pr-4 font-medium">{t("users.email")}</th>
+                  <th className="pb-3 pr-4 font-medium text-right">{t("reports.orders")}</th>
+                  <th className="pb-3 font-medium text-right">{t("reports.earnings")}</th>
                 </tr>
               </thead>
               <tbody>

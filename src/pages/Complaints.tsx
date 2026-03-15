@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/Badge";
 import {
   listComplaints,
@@ -14,6 +15,7 @@ import {
   updateComplaint,
 } from "@/services/complaintsService";
 import type { Complaint, ComplaintDetail, ComplaintMessage, ComplaintStatus } from "@/types";
+import type { TFunction } from "i18next";
 
 const STATUS_OPTIONS: ComplaintStatus[] = [
   "open",
@@ -36,6 +38,7 @@ function formatDate(val: string | undefined): string {
 }
 
 export function Complaints() {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -163,14 +166,15 @@ export function Complaints() {
           onClick={() => setSelectedId(null)}
           className="text-mordobo-accentLight text-sm mb-5 cursor-pointer hover:underline bg-transparent border-0 p-0 font-inherit"
         >
-          ← Back to list
+          {t("complaints.backToList")}
         </button>
         {detailLoading ? (
           <div className="py-12 text-center text-mordobo-textSecondary text-sm">
-            Loading…
+            {t("common.loading")}
           </div>
         ) : detail ? (
           <DetailView
+            t={t}
             detail={detail}
             messages={messages}
             messagesLoading={messagesLoading}
@@ -187,7 +191,7 @@ export function Complaints() {
             onStatusChange={(status) => handleStatusChange(selectedId!, status)}
             onMarkResolved={() => handleStatusChange(selectedId!, "resolved")}
             onEscalate={() => {
-              if (window.confirm("Escalate this ticket?")) {
+              if (window.confirm(t("complaints.escalateConfirm"))) {
                 escalateMutation.mutate(selectedId!);
               }
             }}
@@ -205,6 +209,7 @@ export function Complaints() {
 
         {refundModal && (
           <RefundModal
+            t={t}
             complaintId={refundModal.id}
             hasOrder={!!refundModal.orderId}
             reason={refundReason}
@@ -240,10 +245,10 @@ export function Complaints() {
   const countClaim = counts?.claim ?? 0;
   const countSuggestion = counts?.suggestion ?? 0;
   const typeFilters = [
-    { key: "all", label: "All", count: countAll },
-    { key: "complaint", label: "Complaint", count: countComplaint },
-    { key: "claim", label: "Claim", count: countClaim },
-    { key: "suggestion", label: "Suggestion", count: countSuggestion },
+    { key: "all", label: t("complaints.all"), count: countAll },
+    { key: "complaint", label: t("complaints.complaint"), count: countComplaint },
+    { key: "claim", label: t("complaints.claim"), count: countClaim },
+    { key: "suggestion", label: t("complaints.suggestion"), count: countSuggestion },
   ] as const;
 
   return (
@@ -271,7 +276,7 @@ export function Complaints() {
         <div className="flex gap-2 items-center">
           <input
             type="search"
-            placeholder="Search by ID, subject, or user name…"
+            placeholder={t("complaints.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSearch()}
@@ -282,25 +287,25 @@ export function Complaints() {
             onClick={handleSearch}
             className="py-2 px-4 bg-mordobo-accent text-white border-0 rounded-lg text-[13px] font-medium cursor-pointer hover:opacity-90"
           >
-            Search
+            {t("complaints.search")}
           </button>
         </div>
       </div>
       <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] overflow-hidden">
         {listLoading ? (
           <div className="py-12 text-center text-mordobo-textSecondary text-sm">
-            Loading…
+            {t("common.loading")}
           </div>
         ) : list.length === 0 ? (
           <div className="py-12 text-center text-mordobo-textSecondary text-sm">
-            No complaints or suggestions match your filters.
+            {t("complaints.noMatch")}
           </div>
         ) : (
           <>
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-mordobo-border">
-                  {["ID", "Type", "From", "Subject", "Priority", "Status", "Date", "Actions"].map(
+                  {[t("complaints.id"), t("complaints.type"), t("complaints.from"), t("complaints.subject"), t("complaints.priority"), t("complaints.status"), t("complaints.date"), t("common.actions")].map(
                     (h) => (
                       <th
                         key={h}
@@ -381,7 +386,7 @@ export function Complaints() {
                         onClick={() => setSelectedId(c.id)}
                         className="py-1.5 px-3 bg-mordobo-accentDim text-mordobo-accentLight border-0 rounded-md text-xs cursor-pointer font-medium"
                       >
-                        Open
+                        {t("complaints.open")}
                       </button>
                     </td>
                   </tr>
@@ -391,7 +396,7 @@ export function Complaints() {
             {pagination.totalPages > 1 && (
               <div className="flex justify-between items-center py-3 px-4 border-t border-mordobo-border text-sm text-mordobo-textSecondary">
                 <span>
-                  Page {pagination.page} of {pagination.totalPages} ({pagination.total} total)
+                  {t("complaints.pageOf", { page: pagination.page, totalPages: pagination.totalPages, total: pagination.total })}
                 </span>
                 <div className="flex gap-2">
                   <button
@@ -400,7 +405,7 @@ export function Complaints() {
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     className="py-1.5 px-3 rounded border border-mordobo-border bg-mordobo-surface disabled:opacity-50 cursor-pointer"
                   >
-                    Previous
+                    {t("onboarding.previous")}
                   </button>
                   <button
                     type="button"
@@ -408,7 +413,7 @@ export function Complaints() {
                     onClick={() => setPage((p) => p + 1)}
                     className="py-1.5 px-3 rounded border border-mordobo-border bg-mordobo-surface disabled:opacity-50 cursor-pointer"
                   >
-                    Next
+                    {t("onboarding.next")}
                   </button>
                 </div>
               </div>
@@ -421,6 +426,7 @@ export function Complaints() {
 }
 
 function DetailView({
+  t,
   detail,
   messages,
   messagesLoading,
@@ -438,6 +444,7 @@ function DetailView({
   respondSending,
   statusUpdating,
 }: {
+  t: TFunction;
   detail: ComplaintDetail;
   messages: ComplaintMessage[];
   messagesLoading: boolean;
@@ -499,9 +506,9 @@ function DetailView({
         </div>
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
-            ["Submitted By", `${detail.from} (${detail.role})`],
-            ["Date", formatDate(detail.date ?? detail.createdAt)],
-            ["Status", detail.status.replace("_", " ")],
+            [t("complaints.submittedBy"), `${detail.from} (${detail.role})`],
+            [t("complaints.date"), formatDate(detail.date ?? detail.createdAt)],
+            [t("complaints.status"), detail.status.replace("_", " ")],
           ].map(([label, val]) => (
             <div key={String(label)}>
               <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
@@ -513,21 +520,21 @@ function DetailView({
         </div>
         <div className="mb-6">
           <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-2.5">
-            Description
+            {t("complaints.description")}
           </div>
           <div className="bg-mordobo-surface border border-mordobo-border rounded-xl p-4 text-sm text-mordobo-textSecondary leading-relaxed">
-            {detail.description ?? "No description."}
+            {detail.description ?? t("complaints.noDescription")}
           </div>
         </div>
         <div className="mb-6">
           <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-2.5">
-            Conversation Thread
+            {t("complaints.conversationThread")}
           </div>
           {messagesLoading ? (
-            <div className="text-[13px] text-mordobo-textSecondary py-2">Loading messages…</div>
+            <div className="text-[13px] text-mordobo-textSecondary py-2">{t("complaints.loadingMessages")}</div>
           ) : messages.length === 0 ? (
             <div className="text-[13px] text-mordobo-textSecondary py-2">
-              No messages yet.
+              {t("complaints.noMessagesYet")}
             </div>
           ) : (
             <div className="space-y-3 mb-4">
@@ -549,7 +556,7 @@ function DetailView({
             </div>
           )}
           <textarea
-            placeholder="Write a response…"
+            placeholder={t("complaints.writeResponse")}
             value={responseText}
             onChange={(e) => setResponseText(e.target.value)}
             className="w-full min-h-[80px] mt-2 bg-mordobo-surface border border-mordobo-border rounded-xl p-3.5 text-mordobo-text text-[13px] resize-y box-border"
@@ -560,7 +567,7 @@ function DetailView({
             disabled={!responseText.trim() || respondSending}
             className="mt-2 py-2.5 px-5 bg-mordobo-accent text-white border-0 rounded-lg text-[13px] font-semibold cursor-pointer hover:opacity-90 disabled:opacity-50"
           >
-            {respondSending ? "Sending…" : "Send Response"}
+            {respondSending ? t("complaints.sending") : t("complaints.sendResponse")}
           </button>
         </div>
         <div className="flex gap-3 flex-wrap">
@@ -574,7 +581,7 @@ function DetailView({
             disabled={statusUpdating}
             className="flex-1 min-w-[140px] py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-lg text-mordobo-text text-[13px]"
           >
-            <option value="">Change status…</option>
+            <option value="">{t("complaints.changeStatus")}</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
                 {s.replace("_", " ")}
@@ -587,7 +594,7 @@ function DetailView({
             disabled={statusUpdating}
             className="py-2.5 px-5 bg-mordobo-successDim text-mordobo-success border border-mordobo-success/30 rounded-lg text-[13px] font-semibold cursor-pointer hover:opacity-90 disabled:opacity-50"
           >
-            Mark Resolved
+            {t("complaints.markResolved")}
           </button>
           <button
             type="button"
@@ -595,58 +602,58 @@ function DetailView({
             disabled={statusUpdating}
             className="py-2.5 px-5 bg-mordobo-dangerDim text-mordobo-danger border border-mordobo-danger/30 rounded-lg text-[13px] font-semibold cursor-pointer hover:opacity-90 disabled:opacity-50"
           >
-            Escalate
+            {t("complaints.escalate")}
           </button>
         </div>
       </div>
       <div className="space-y-4">
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
           <h3 className="m-0 mb-4 text-sm font-semibold text-mordobo-text">
-            Related Information
+            {t("complaints.relatedInformation")}
           </h3>
           {relatedJob ? (
             <ul className="text-xs text-mordobo-textSecondary space-y-2 list-none p-0 m-0">
               <li>
-                <strong className="text-mordobo-text">Job ID:</strong> {relatedJob.jobId?.slice(0, 8)}…
+                <strong className="text-mordobo-text">{t("complaints.jobId")}</strong> {relatedJob.jobId?.slice(0, 8)}…
               </li>
               <li>
-                <strong className="text-mordobo-text">Provider:</strong>{" "}
+                <strong className="text-mordobo-text">{t("complaints.provider")}</strong>{" "}
                 {relatedJob.providerName ?? "—"}
               </li>
               <li>
-                <strong className="text-mordobo-text">Service:</strong>{" "}
+                <strong className="text-mordobo-text">{t("complaints.service")}</strong>{" "}
                 {relatedJob.serviceName ?? "—"}
               </li>
               <li>
-                <strong className="text-mordobo-text">Amount:</strong>{" "}
+                <strong className="text-mordobo-text">{t("complaints.amount")}</strong>{" "}
                 {relatedJob.amount != null ? `$${Number(relatedJob.amount).toFixed(2)}` : "—"}
               </li>
               <li>
-                <strong className="text-mordobo-text">Job date:</strong>{" "}
+                <strong className="text-mordobo-text">{t("complaints.jobDate")}</strong>{" "}
                 {relatedJob.jobDate ? formatDate(relatedJob.jobDate) : "—"}
               </li>
             </ul>
           ) : (
             <p className="text-xs text-mordobo-textSecondary m-0">
-              No related job for this ticket.
+              {t("complaints.noRelatedJob")}
             </p>
           )}
         </div>
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-          <h3 className="m-0 mb-4 text-sm font-semibold text-mordobo-text">Quick Actions</h3>
+          <h3 className="m-0 mb-4 text-sm font-semibold text-mordobo-text">{t("complaints.quickActions")}</h3>
           <button
             type="button"
             onClick={onRefund}
             className="block w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-lg text-mordobo-text text-[13px] text-left cursor-pointer mb-2 hover:bg-mordobo-surfaceHover"
           >
-            Issue partial refund
+            {t("complaints.issuePartialRefund")}
           </button>
           {relatedJob?.providerEmail && (
             <a
               href={`mailto:${relatedJob.providerEmail}`}
               className="block w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-lg text-mordobo-text text-[13px] text-left cursor-pointer mb-2 hover:bg-mordobo-surfaceHover no-underline"
             >
-              Contact provider
+              {t("complaints.contactProvider")}
             </a>
           )}
           <button
@@ -654,7 +661,7 @@ function DetailView({
             onClick={onFlagForReview}
             className="block w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-lg text-mordobo-text text-[13px] text-left cursor-pointer mb-2 hover:bg-mordobo-surfaceHover"
           >
-            {detail.isFlaggedForReview ? "Unflag from review" : "Flag for review"}
+            {t("complaints.flagForReview")}
           </button>
           <p className="text-[11px] text-mordobo-textMuted mt-2 mb-0">
             Contact client / Suspend provider: use Users or Providers section.
@@ -666,6 +673,7 @@ function DetailView({
 }
 
 function RefundModal({
+  t,
   complaintId,
   hasOrder,
   reason,
@@ -676,6 +684,7 @@ function RefundModal({
   onConfirm,
   loading,
 }: {
+  t: TFunction;
   complaintId: string;
   hasOrder: boolean;
   reason: string;
@@ -690,17 +699,16 @@ function RefundModal({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
         <div className="bg-mordobo-card border border-mordobo-border rounded-xl p-6 max-w-md w-full mx-4">
-          <h3 className="m-0 mb-2 text-lg font-semibold text-mordobo-text">No related order</h3>
+          <h3 className="m-0 mb-2 text-lg font-semibold text-mordobo-text">{t("complaints.noRelatedOrder")}</h3>
           <p className="text-sm text-mordobo-textSecondary mb-4">
-            This complaint has no linked order. Refunds are only available when the ticket is
-            linked to an order with a payment.
+            {t("complaints.noRelatedOrderMessage")}
           </p>
           <button
             type="button"
             onClick={onClose}
             className="py-2 px-4 bg-mordobo-surface border border-mordobo-border rounded-lg text-mordobo-text cursor-pointer"
           >
-            Close
+            {t("users.close")}
           </button>
         </div>
       </div>
@@ -709,23 +717,22 @@ function RefundModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="bg-mordobo-card border border-mordobo-border rounded-xl p-6 max-w-md w-full mx-4">
-        <h3 className="m-0 mb-4 text-lg font-semibold text-mordobo-text">Issue refund</h3>
+        <h3 className="m-0 mb-4 text-lg font-semibold text-mordobo-text">{t("complaints.refundTitle")}</h3>
         <p className="text-sm text-mordobo-textSecondary mb-4">
-          Refund will be applied to the payment for the related order. Leave amount empty for full
-          refund.
+          {t("complaints.refundAmount")}
         </p>
         <label className="block text-sm font-medium text-mordobo-text mb-1">
-          Reason (required)
+          {t("complaints.refundReason")}
         </label>
         <input
           type="text"
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          placeholder="Refund reason"
+          placeholder={t("complaints.refundReason")}
           className="w-full py-2 px-3 border border-mordobo-border rounded-lg bg-mordobo-surface text-mordobo-text mb-4"
         />
         <label className="block text-sm font-medium text-mordobo-text mb-1">
-          Amount (optional, partial refund)
+          {t("complaints.refundAmount")}
         </label>
         <input
           type="number"
@@ -733,7 +740,7 @@ function RefundModal({
           min="0"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
-          placeholder="Leave empty for full refund"
+          placeholder={t("complaints.refundAmount")}
           className="w-full py-2 px-3 border border-mordobo-border rounded-lg bg-mordobo-surface text-mordobo-text mb-4"
         />
         <div className="flex gap-2 justify-end">
@@ -742,7 +749,7 @@ function RefundModal({
             onClick={onClose}
             className="py-2 px-4 bg-mordobo-surface border border-mordobo-border rounded-lg text-mordobo-text cursor-pointer"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -750,7 +757,7 @@ function RefundModal({
             disabled={!reason.trim() || loading}
             className="py-2 px-4 bg-mordobo-accent text-white border-0 rounded-lg cursor-pointer disabled:opacity-50"
           >
-            {loading ? "Processing…" : "Issue refund"}
+            {loading ? t("common.loading") : t("complaints.refundTitle")}
           </button>
         </div>
       </div>

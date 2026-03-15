@@ -8,12 +8,20 @@ interface HeaderProps {
   onMenuClick?: () => void;
 }
 
+/** Normalized check: i18n can return "es", "es-ES", etc. */
+function isSpanish(lng: string | undefined): boolean {
+  return (lng ?? "").startsWith("es");
+}
+
 export function Header({ onMenuClick }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const { logout } = useAuth();
   const [search, setSearch] = useState("");
   const [notificationsCount] = useState(0);
+
+  const currentLngIsSpanish = isSpanish(i18n.language);
+  const toggleLanguage = () => i18n.changeLanguage(currentLngIsSpanish ? "en" : "es");
 
   const current = NAV_ITEMS.find((n) => n.path === location.pathname || (n.path !== "/" && location.pathname.startsWith(n.path)));
   const title = current ? `${current.icon} ${t(`nav.${current.id}`)}` : `Mordobo ${t("nav.backoffice")}`;
@@ -50,10 +58,12 @@ export function Header({ onMenuClick }: HeaderProps) {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => i18n.changeLanguage(i18n.language === "es" ? "en" : "es")}
+            onClick={toggleLanguage}
             className="text-xs font-medium text-mordobo-textMuted hover:text-mordobo-text px-2 py-1 rounded border border-mordobo-border hover:border-mordobo-accent/50"
+            title={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
+            aria-label={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
           >
-            {i18n.language === "es" ? "EN" : "ES"}
+            {currentLngIsSpanish ? "EN" : "ES"}
           </button>
           <button
             type="button"
