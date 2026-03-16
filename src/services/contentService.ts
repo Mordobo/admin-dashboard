@@ -16,14 +16,17 @@ const CONTENT_BASE = "/api/admin/content";
 const NOTIFICATIONS_BASE = "/api/admin/notifications";
 
 // --- FAQs ---
+/** List all FAQ categories with nested questions and answers from the API (DB). */
 export async function listFaqs(): Promise<FaqCategory[]> {
-  try {
-    const { data } = await api.get<{ categories?: FaqCategory[]; data?: FaqCategory[] }>(`${CONTENT_BASE}/faqs`);
-    const list = data?.categories ?? data?.data;
-    return Array.isArray(list) ? list : [];
-  } catch {
-    return [];
-  }
+  const { data } = await api.get<{ categories?: FaqCategory[]; data?: FaqCategory[] }>(`${CONTENT_BASE}/faqs`);
+  const list = data?.categories ?? data?.data;
+  if (!Array.isArray(list)) return [];
+  return list.map((cat) => ({
+    ...cat,
+    questions: Array.isArray(cat.questions)
+      ? cat.questions.map((q) => ({ ...q, answers: Array.isArray(q.answers) ? q.answers : [] }))
+      : [],
+  }));
 }
 
 export async function createFaqCategory(payload: {

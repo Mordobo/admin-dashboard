@@ -105,7 +105,13 @@
     "addQuestion": "Add question",
     "adding": "Adding…",
     "editBanner": "Edit banner",
-    "newBanner": "New banner"
+    "newBanner": "New banner",
+    "faqsLoadError": "Failed to load FAQs. Check your connection and try again.",
+    "faqsEmpty": "No FAQ categories yet. Add one to get started.",
+    "faqsLoading": "Loading FAQs…",
+    "newFaqCategory": "New FAQ category",
+    "faqsPublishHint": "Only published categories, questions and answers are shown in the app (Help Center). Set status to Published for each item you want visible.",
+    "faqsNoPublishedQuestions": "Published category but no published questions — won't appear in the app. Edit each question and set Status to Published."
   },
   "reports": {
     "title": "Reports & Analytics",

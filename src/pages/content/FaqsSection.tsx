@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import type { AxiosError } from "axios";
 import { Badge } from "@/components/Badge";
 import {
   listFaqs,
@@ -15,6 +16,16 @@ import {
   deleteFaqAnswer,
 } from "@/services/contentService";
 import type { ContentStatus } from "@/types";
+
+/** Prefer API error message (e.g. schema_not_migrated) over generic axios message. */
+function getApiErrorMessage(error: unknown): string {
+  const ax = error as AxiosError<{ message?: string; detail?: string; hint?: string }>;
+  const msg = ax.response?.data?.message ?? ax.response?.data?.detail;
+  const hint = ax.response?.data?.hint;
+  if (msg && hint) return `${msg} ${hint}`;
+  if (msg) return msg;
+  return (error as Error)?.message ?? "Failed to create category";
+}
 
 const STATUS_OPTIONS: ContentStatus[] = ["draft", "published"];
 const STATUS_LABELS: Record<ContentStatus, string> = { draft: "Draft", published: "Published" };
@@ -35,17 +46,21 @@ export function FaqsSection() {
   const [addingQuestionCategoryId, setAddingQuestionCategoryId] = useState<string | null>(null);
   const [newQuestionEn, setNewQuestionEn] = useState("");
   const [newQuestionEs, setNewQuestionEs] = useState("");
+  const [newQuestionStatus, setNewQuestionStatus] = useState<ContentStatus>("draft");
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editQuestionEn, setEditQuestionEn] = useState("");
   const [editQuestionEs, setEditQuestionEs] = useState("");
+  const [editQuestionStatus, setEditQuestionStatus] = useState<ContentStatus>("draft");
   const [addingAnswerQuestionId, setAddingAnswerQuestionId] = useState<string | null>(null);
   const [newAnswerEn, setNewAnswerEn] = useState("");
   const [newAnswerEs, setNewAnswerEs] = useState("");
+  const [newAnswerStatus, setNewAnswerStatus] = useState<ContentStatus>("draft");
   const [editingAnswerId, setEditingAnswerId] = useState<string | null>(null);
   const [editAnswerEn, setEditAnswerEn] = useState("");
   const [editAnswerEs, setEditAnswerEs] = useState("");
+  const [editAnswerStatus, setEditAnswerStatus] = useState<ContentStatus>("draft");
 
-  const { data: categories = [], isLoading } = useQuery({
+  const { data: categories = [], isLoading, isError, error } = useQuery({
     queryKey: ["content-faqs"],
     queryFn: listFaqs,
   });
@@ -89,13 +104,14 @@ export function FaqsSection() {
       createFaqQuestion(categoryId, {
         question_en: newQuestionEn.trim() || undefined,
         question_es: newQuestionEs.trim() || undefined,
-        status: "draft",
+        status: newQuestionStatus,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-faqs"] });
       setAddingQuestionCategoryId(null);
       setNewQuestionEn("");
       setNewQuestionEs("");
+      setNewQuestionStatus("draft");
     },
   });
 
@@ -104,6 +120,7 @@ export function FaqsSection() {
       updateFaqQuestion(categoryId, questionId, {
         question_en: editQuestionEn.trim() || undefined,
         question_es: editQuestionEs.trim() || undefined,
+        status: editQuestionStatus,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-faqs"] });
@@ -122,13 +139,14 @@ export function FaqsSection() {
       createFaqAnswer(categoryId, questionId, {
         answer_en: newAnswerEn.trim() || undefined,
         answer_es: newAnswerEs.trim() || undefined,
-        status: "draft",
+        status: newAnswerStatus,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-faqs"] });
       setAddingAnswerQuestionId(null);
       setNewAnswerEn("");
       setNewAnswerEs("");
+      setNewAnswerStatus("draft");
     },
   });
 
@@ -145,6 +163,7 @@ export function FaqsSection() {
       updateFaqAnswer(categoryId, questionId, answerId, {
         answer_en: editAnswerEn.trim() || undefined,
         answer_es: editAnswerEs.trim() || undefined,
+        status: editAnswerStatus,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-faqs"] });
@@ -168,7 +187,18 @@ export function FaqsSection() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12 text-mordobo-textSecondary">
-        Loading FAQs…
+        {t("content.faqsLoading")}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="rounded-[14px] border border-mordobo-border bg-mordobo-card p-6 text-center">
+        <p className="text-mordobo-danger text-sm mb-2">{t("content.faqsLoadError")}</p>
+        <p className="text-mordobo-textMuted text-xs">
+          {(error as Error)?.message ?? "Unknown error"}
+        </p>
       </div>
     );
   }
@@ -185,10 +215,11 @@ export function FaqsSection() {
           {t("content.addCategory")}
         </button>
       </div>
+      <p className="text-mordobo-textMuted text-sm mb-2">{t("content.faqsPublishHint")}</p>
 
       {categoryFormOpen && (
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-          <h3 className="text-base font-semibold text-mordobo-text mb-4">New FAQ category</h3>
+          <h3 className="text-base font-semibold text-mordobo-text mb-4">{t("content.newFaqCategory")}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
@@ -233,7 +264,7 @@ export function FaqsSection() {
           </div>
           {createCategoryMutation.isError && (
             <p className="text-mordobo-danger text-sm mb-4">
-              {(createCategoryMutation.error as Error)?.message ?? "Failed to create category"}
+              {getApiErrorMessage(createCategoryMutation.error)}
             </p>
           )}
           <div className="flex gap-3">
@@ -278,6 +309,13 @@ export function FaqsSection() {
                   </div>
                   <div className="text-xs text-mordobo-textMuted">
                     {(cat.questions?.length ?? 0)} question(s)
+                    {(cat.status === "published" &&
+                      (cat.questions ?? []).filter((q) => q.status === "published").length === 0 &&
+                      (cat.questions?.length ?? 0) > 0) && (
+                      <span className="block text-mordobo-warning mt-0.5">
+                        {t("content.faqsNoPublishedQuestions")}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Badge color={STATUS_COLORS[cat.status ?? "draft"]}>
@@ -420,6 +458,22 @@ export function FaqsSection() {
                           className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
                         />
                       </div>
+                      <div>
+                        <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+                          Status
+                        </label>
+                        <select
+                          value={newQuestionStatus}
+                          onChange={(e) => setNewQuestionStatus(e.target.value as ContentStatus)}
+                          className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
+                        >
+                          {STATUS_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                              {STATUS_LABELS[s]}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
                     <div className="flex gap-3">
                       <button
@@ -459,6 +513,20 @@ export function FaqsSection() {
                           placeholder="Question (ES)"
                           className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
                         />
+                        <div>
+                          <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">Status</label>
+                          <select
+                            value={editQuestionStatus}
+                            onChange={(e) => setEditQuestionStatus(e.target.value as ContentStatus)}
+                            className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
+                          >
+                            {STATUS_OPTIONS.map((s) => (
+                              <option key={s} value={s}>
+                                {STATUS_LABELS[s]}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                         <div className="flex gap-2">
                           <button
                             type="button"
@@ -485,9 +553,16 @@ export function FaqsSection() {
                     ) : (
                       <>
                         <div className="flex items-start justify-between gap-2">
-                          <p className="font-medium text-mordobo-text m-0">
-                            {q.question_en || q.question_es || "Untitled question"}
-                          </p>
+                          <div className="min-w-0">
+                            <p className="font-medium text-mordobo-text m-0">
+                              {q.question_en || q.question_es || "Untitled question"}
+                            </p>
+                            <span className="mt-1 inline-block">
+                              <Badge color={STATUS_COLORS[(q.status as ContentStatus) ?? "draft"]}>
+                                {STATUS_LABELS[(q.status as ContentStatus) ?? "draft"]}
+                              </Badge>
+                            </span>
+                          </div>
                           <div className="flex gap-2 shrink-0">
                             <button
                               type="button"
@@ -495,6 +570,7 @@ export function FaqsSection() {
                                 setEditingQuestionId(q.id);
                                 setEditQuestionEn(q.question_en ?? "");
                                 setEditQuestionEs(q.question_es ?? "");
+                                setEditQuestionStatus((q.status as ContentStatus) ?? "draft");
                               }}
                               className="text-mordobo-accentLight text-xs hover:underline"
                             >
@@ -534,6 +610,20 @@ export function FaqsSection() {
                                     placeholder="Answer (ES)"
                                     className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
                                   />
+                                  <div>
+                                    <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">Status</label>
+                                    <select
+                                      value={editAnswerStatus}
+                                      onChange={(e) => setEditAnswerStatus(e.target.value as ContentStatus)}
+                                      className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
+                                    >
+                                      {STATUS_OPTIONS.map((s) => (
+                                        <option key={s} value={s}>
+                                          {STATUS_LABELS[s]}
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
                                   <div className="flex gap-2">
                                     <button
                                       type="button"
@@ -570,6 +660,7 @@ export function FaqsSection() {
                                         setEditingAnswerId(ans.id);
                                         setEditAnswerEn(ans.answer_en ?? "");
                                         setEditAnswerEs(ans.answer_es ?? "");
+                                        setEditAnswerStatus((ans.status as ContentStatus) ?? "draft");
                                       }}
                                       className="text-mordobo-accentLight text-xs"
                                     >
@@ -609,6 +700,20 @@ export function FaqsSection() {
                                 placeholder="Answer (ES)"
                                 className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
                               />
+                              <div>
+                                <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">Status</label>
+                                <select
+                                  value={newAnswerStatus}
+                                  onChange={(e) => setNewAnswerStatus(e.target.value as ContentStatus)}
+                                  className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
+                                >
+                                  {STATUS_OPTIONS.map((s) => (
+                                    <option key={s} value={s}>
+                                      {STATUS_LABELS[s]}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
                               <div className="flex gap-2">
                                 <button
                                   type="button"
@@ -653,7 +758,7 @@ export function FaqsSection() {
 
         {categories.length === 0 && (
           <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] py-12 text-center text-mordobo-textSecondary text-sm">
-            No FAQ categories yet. Add one to get started.
+            {t("content.faqsEmpty")}
           </div>
         )}
       </div>

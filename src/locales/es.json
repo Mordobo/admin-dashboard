@@ -105,7 +105,13 @@
     "addQuestion": "Añadir pregunta",
     "adding": "Añadiendo…",
     "editBanner": "Editar banner",
-    "newBanner": "Nuevo banner"
+    "newBanner": "Nuevo banner",
+    "faqsLoadError": "Error al cargar las FAQs. Comprueba la conexión e inténtalo de nuevo.",
+    "faqsEmpty": "Aún no hay categorías de FAQ. Añade una para empezar.",
+    "faqsLoading": "Cargando FAQs…",
+    "newFaqCategory": "Nueva categoría FAQ",
+    "faqsPublishHint": "En la app (Centro de ayuda) solo se muestran categorías, preguntas y respuestas publicadas. Pon el estado en Publicado en cada ítem que quieras que se vea.",
+    "faqsNoPublishedQuestions": "Categoría publicada pero sin preguntas publicadas — no se verá en la app. Edita cada pregunta y pon Estado en Publicado."
   },
   "reports": {
     "title": "Informes y análisis",
