@@ -16,6 +16,7 @@ export function NotificationsSection() {
   const [body, setBody] = useState("");
   const [target, setTarget] = useState<SendNotificationRequest["target"]>("all");
   const [userId, setUserId] = useState("");
+  const [lastRecipientsCount, setLastRecipientsCount] = useState<number | null>(null);
 
   const { data: historyData, isLoading } = useQuery({
     queryKey: ["content-notifications-history"],
@@ -24,11 +25,12 @@ export function NotificationsSection() {
 
   const sendMutation = useMutation({
     mutationFn: (payload: SendNotificationRequest) => sendNotification(payload),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["content-notifications-history"] });
       setTitle("");
       setBody("");
       setUserId("");
+      setLastRecipientsCount(data?.recipientsCount ?? null);
     },
   });
 
@@ -62,7 +64,10 @@ export function NotificationsSection() {
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setLastRecipientsCount(null);
+              }}
               placeholder="Notification title"
               className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
             />
@@ -85,7 +90,10 @@ export function NotificationsSection() {
             </label>
             <select
               value={target}
-              onChange={(e) => setTarget(e.target.value as SendNotificationRequest["target"])}
+              onChange={(e) => {
+                setTarget(e.target.value as SendNotificationRequest["target"]);
+                setLastRecipientsCount(null);
+              }}
               className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
             >
               {TARGET_OPTIONS.map(({ value: v, label }) => (
@@ -110,6 +118,11 @@ export function NotificationsSection() {
             </div>
           )}
         </div>
+        {lastRecipientsCount !== null && !sendMutation.isError && (
+          <p className="text-emerald-500 dark:text-emerald-400 text-sm mb-4">
+            Sent to {lastRecipientsCount} recipient(s). They will see it in the app notification center.
+          </p>
+        )}
         {sendMutation.isError && (
           <p className="text-mordobo-danger text-sm mb-4">
             {(sendMutation.error as Error)?.message ?? "Failed to send"}
