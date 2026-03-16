@@ -157,8 +157,14 @@ export async function getLegalDocumentVersions(docType: LegalDocType): Promise<L
 }
 
 // --- Push Notifications ---
-export async function sendNotification(payload: SendNotificationRequest): Promise<{ id?: string }> {
-  const { data } = await api.post<{ id?: string }>(`${NOTIFICATIONS_BASE}/send`, payload);
+export async function sendNotification(payload: SendNotificationRequest): Promise<{
+  id?: string;
+  recipientsCount?: number;
+}> {
+  const { data } = await api.post<{ id?: string; recipientsCount?: number }>(
+    `${NOTIFICATIONS_BASE}/send`,
+    payload
+  );
   return data ?? {};
 }
 
