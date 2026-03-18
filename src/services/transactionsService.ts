@@ -15,10 +15,19 @@ export interface TransactionsListResponse {
   limit: number;
 }
 
+function getUserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  } catch {
+    return "UTC";
+  }
+}
+
 function buildParams(params: TransactionsListParams): Record<string, string | number | undefined> {
   const out: Record<string, string | number | undefined> = {};
   if (params.start_date) out.start_date = params.start_date;
   if (params.end_date) out.end_date = params.end_date;
+  if (params.start_date || params.end_date) out.timezone = getUserTimezone();
   if (params.status) out.status = params.status;
   if (params.min_amount != null) out.min_amount = params.min_amount;
   if (params.max_amount != null) out.max_amount = params.max_amount;
@@ -59,7 +68,9 @@ export async function fetchTransactionsSummary(params?: {
 }): Promise<TransactionsSummary> {
   try {
     const { data } = await api.get<TransactionsSummary>(`${BASE}/summary`, {
-      params: params?.start_date ? { start_date: params.start_date, end_date: params.end_date } : undefined,
+      params: params?.start_date
+        ? { start_date: params.start_date, end_date: params.end_date, timezone: getUserTimezone() }
+        : undefined,
     });
     return (
       data ?? {
@@ -101,6 +112,7 @@ export async function exportTransactionsCsv(
     params: {
       start_date: params.start_date,
       end_date: params.end_date,
+      timezone: params.start_date || params.end_date ? getUserTimezone() : undefined,
       status: params.status,
       min_amount: params.min_amount,
       max_amount: params.max_amount,
