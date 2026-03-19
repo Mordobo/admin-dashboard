@@ -126,13 +126,12 @@ export function Providers() {
   const limit = listData?.limit ?? 20;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const flatCategoryOptions: { value: string; label: string }[] = [];
-  categories.forEach((c: ServiceCatalogCategory) => {
-    flatCategoryOptions.push({ value: c.id, label: `${c.name ?? c.name_en ?? c.id} (category)` });
-    (c.subcategories ?? []).forEach((s) => {
-      flatCategoryOptions.push({ value: s.id, label: `  ${s.name ?? s.name_en ?? s.id}` });
-    });
-  });
+  const categoryOptions: { value: string; label: string }[] = categories.map(
+    (c: ServiceCatalogCategory) => ({
+      value: c.id,
+      label: c.name ?? c.name_en ?? c.id,
+    })
+  );
 
   const statusOptions = [
     { value: "", label: t("providers.activeOnly") },
@@ -189,7 +188,7 @@ export function Providers() {
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[180px]"
           >
             <option value="">{t("providers.allCategories")}</option>
-            {flatCategoryOptions.map((opt) => (
+            {categoryOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
