@@ -126,12 +126,12 @@ export function Providers() {
   const limit = listData?.limit ?? 20;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const categoryOptions: { value: string; label: string }[] = categories.map(
-    (c: ServiceCatalogCategory) => ({
-      value: c.id,
-      label: c.name ?? c.name_en ?? c.id,
-    })
-  );
+  const categoryOptions: { value: string; label: string }[] = (categories ?? [])
+    .filter((c: ServiceCatalogCategory) => c?.id)
+    .map((c: ServiceCatalogCategory) => ({
+      value: String(c.id),
+      label: c.name ?? c.name_en ?? String(c.id),
+    }));
 
   const statusOptions = [
     { value: "", label: t("providers.activeOnly") },
@@ -182,9 +182,10 @@ export function Providers() {
           </select>
           <select
             value={filters.category ?? ""}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, category: e.target.value || undefined, page: 1 }))
-            }
+            onChange={(e) => {
+              const v = e.target.value;
+              setFilters((f) => ({ ...f, category: v === "" ? undefined : v, page: 1 }));
+            }}
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[180px]"
           >
             <option value="">{t("providers.allCategories")}</option>

@@ -18,9 +18,9 @@ function buildParams(params: ProviderListParams): Record<string, string | number
   const out: Record<string, string | number | undefined> = {};
   if (params.page != null) out.page = params.page;
   if (params.limit != null) out.limit = params.limit;
-  if (params.search) out.search = params.search;
-  if (params.status) out.status = params.status;
-  if (params.category) out.category = params.category;
+  if (params.search != null && params.search !== "") out.search = params.search;
+  if (params.status != null && params.status !== "") out.status = params.status;
+  if (params.category != null && params.category !== "") out.category = params.category;
   if (params.rating != null) out.rating = params.rating;
   return out;
 }
