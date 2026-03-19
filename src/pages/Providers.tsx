@@ -126,12 +126,21 @@ export function Providers() {
   const limit = listData?.limit ?? 20;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const categoryOptions: { value: string; label: string }[] = (categories ?? [])
-    .filter((c: ServiceCatalogCategory) => c?.id)
-    .map((c: ServiceCatalogCategory) => ({
+  const categoryFilterOptions: { value: string; label: string }[] = [];
+  (categories ?? []).forEach((c: ServiceCatalogCategory) => {
+    if (!c?.id) return;
+    categoryFilterOptions.push({
       value: String(c.id),
-      label: c.name ?? c.name_en ?? String(c.id),
-    }));
+      label: t("providers.filterOptionParentCategory", { name: c.name ?? c.name_en ?? c.id }),
+    });
+    (c.subcategories ?? []).forEach((s) => {
+      if (!s?.id) return;
+      categoryFilterOptions.push({
+        value: String(s.id),
+        label: t("providers.filterOptionSubcategory", { name: s.name ?? s.name_en ?? s.id }),
+      });
+    });
+  });
 
   const statusOptions = [
     { value: "", label: t("providers.activeOnly") },
@@ -188,8 +197,8 @@ export function Providers() {
             }}
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[180px]"
           >
-            <option value="">{t("providers.allCategories")}</option>
-            {categoryOptions.map((opt) => (
+            <option value="">{t("providers.allCategoriesAndSubcategories")}</option>
+            {categoryFilterOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -223,7 +232,8 @@ export function Providers() {
                   <tr className="border-b border-mordobo-border text-left text-mordobo-textSecondary">
                     <th className="pb-3 pr-4 font-medium">{t("users.id")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("users.name")}</th>
-                    <th className="pb-3 pr-4 font-medium">{t("providers.serviceCategory")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("providers.parentCategoryColumn")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("providers.subcategoryColumn")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("users.location")}</th>
                     <th className="pb-3 pr-4 font-medium text-right">Rating</th>
                     <th className="pb-3 pr-4 font-medium text-right">{t("providers.totalJobs")}</th>
@@ -243,7 +253,10 @@ export function Providers() {
                       </td>
                       <td className="py-3 pr-4 text-mordobo-text">{p.name || p.email}</td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">
-                        {p.service_category ?? "—"}
+                        {p.parent_category_name ?? "—"}
+                      </td>
+                      <td className="py-3 pr-4 text-mordobo-textSecondary">
+                        {p.subcategory_name ?? "—"}
                       </td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">{p.location ?? "—"}</td>
                       <td className="py-3 pr-4 text-right text-mordobo-text">
@@ -561,8 +574,8 @@ function ProviderDetailPanel({
       <section>
         <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("providers.profile")}</h4>
         <p className="text-sm text-mordobo-textSecondary">
-          {profile.bio || t("providers.noBio")} · {t("users.location")}: {profile.location ?? "—"} · {t("providers.serviceCategory")}:{" "}
-          {profile.service_category ?? "—"}
+          {profile.bio || t("providers.noBio")} · {t("users.location")}: {profile.location ?? "—"} · {t("providers.parentCategoryColumn")}:{" "}
+          {profile.parent_category_name ?? "—"} · {t("providers.subcategoryColumn")}: {profile.subcategory_name ?? "—"}
         </p>
         {profile.hourly_rate != null && (
           <p className="text-sm text-mordobo-textSecondary">{t("providers.hourlyRate")} {formatMoney(profile.hourly_rate)}</p>

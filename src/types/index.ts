@@ -403,6 +403,10 @@ export interface ProviderListItem {
   email: string;
   service_category: string | null;
   service_category_id: string | null;
+  /** Parent category name (from catalog join); absent on older API responses */
+  parent_category_name?: string | null;
+  /** Subcategory name (from catalog join, or legacy text when no service_category_id) */
+  subcategory_name?: string | null;
   location: string | null;
   rating: number;
   total_reviews: number;
@@ -432,6 +436,8 @@ export interface ProviderProfile {
   phone_number: string | null;
   service_category: string | null;
   service_category_id: string | null;
+  parent_category_name?: string | null;
+  subcategory_name?: string | null;
   bio: string | null;
   location: string | null;
   latitude: number | null;
