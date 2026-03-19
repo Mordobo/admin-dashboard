@@ -20,8 +20,10 @@ function buildParams(params: ProviderListParams): Record<string, string | number
   if (params.limit != null) out.limit = params.limit;
   if (params.search != null && params.search !== "") out.search = params.search;
   if (params.status != null && params.status !== "") out.status = params.status;
-  if (params.category != null && params.category !== "") out.category = params.category;
-  if (params.subcategory != null && params.subcategory !== "") out.subcategory = params.subcategory;
+  const hasSubcategory = params.subcategory != null && params.subcategory !== "";
+  // Mutual exclusivity: when subcategory is selected, do not send category.
+  if (!hasSubcategory && params.category != null && params.category !== "") out.category = params.category;
+  if (hasSubcategory) out.subcategory = params.subcategory;
   if (params.rating != null) out.rating = params.rating;
   return out;
 }

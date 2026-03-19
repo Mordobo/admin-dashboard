@@ -128,22 +128,18 @@ export function Providers() {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const categoryFilterOptions: { value: string; label: string }[] = [];
+  // Category filter should only show parent categories (NOT subcategories).
   (categories ?? []).forEach((c: ServiceCatalogCategory) => {
     if (!c?.id) return;
     categoryFilterOptions.push({
       value: String(c.id),
       label: t("providers.filterOptionParentCategory", { name: c.name ?? c.name_en ?? c.id }),
     });
-    (c.subcategories ?? []).forEach((s) => {
-      if (!s?.id) return;
-      categoryFilterOptions.push({
-        value: String(s.id),
-        label: t("providers.filterOptionSubcategory", { name: s.name ?? s.name_en ?? s.id }),
-      });
-    });
   });
 
   const subcategoryFilterOptions = useMemo(() => {
+    // Subcategory dropdown is dependent on the selected category.
+    if (!filters.category) return [];
     const out: { value: string; label: string; parentId: string }[] = [];
     (categories ?? []).forEach((c: ServiceCatalogCategory) => {
       if (!c?.id) return;
@@ -151,7 +147,7 @@ export function Providers() {
       const parentLabel = c.name ?? c.name_en ?? parentId;
       (c.subcategories ?? []).forEach((s) => {
         if (!s?.id) return;
-        if (filters.category && parentId !== filters.category) return;
+        if (parentId !== filters.category) return;
         out.push({
           value: String(s.id),
           parentId,
@@ -218,20 +214,13 @@ export function Providers() {
               const v = e.target.value;
               setFilters((f) => {
                 const nextCat = v === "" ? undefined : v;
-                let sub = f.subcategory;
-                if (nextCat && sub) {
-                  const catObj = categories.find((c) => String(c.id) === nextCat);
-                  const validSubIds = new Set(
-                    (catObj?.subcategories ?? []).map((s) => String(s.id))
-                  );
-                  if (!validSubIds.has(sub)) sub = undefined;
-                }
-                return { ...f, category: nextCat, subcategory: sub, page: 1 };
+                // Mutual exclusivity: choosing category clears subcategory.
+                return { ...f, category: nextCat, subcategory: undefined, page: 1 };
               });
             }}
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[180px]"
           >
-            <option value="">{t("providers.allCategoriesAndSubcategories")}</option>
+            <option value="">{t("providers.allCategories")}</option>
             {categoryFilterOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
@@ -244,7 +233,8 @@ export function Providers() {
               const v = e.target.value;
               setFilters((f) => ({ ...f, subcategory: v === "" ? undefined : v, page: 1 }));
             }}
-            className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[200px]"
+            disabled={!filters.category}
+            className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[200px] disabled:opacity-50"
           >
             <option value="">{t("providers.allSubcategories")}</option>
             {subcategoryFilterOptions.map((opt) => (
