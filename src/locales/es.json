@@ -291,6 +291,8 @@
     "allCategoriesAndSubcategories": "Todas las categorías y subcategorías",
     "filterOptionParentCategory": "{{name}} (categoría)",
     "filterOptionSubcategory": "{{name}}",
+    "allSubcategories": "Todas las subcategorías",
+    "subcategoryFilterLabel": "{{parent}} — {{name}}",
     "parentCategoryColumn": "Categoría",
     "subcategoryColumn": "Subcategoría",
     "minRating": "Valoración mín.",

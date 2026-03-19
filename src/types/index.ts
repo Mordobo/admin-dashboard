@@ -425,6 +425,7 @@ export interface ProviderListParams {
   search?: string;
   status?: string;
   category?: string;
+  subcategory?: string;
   rating?: number;
 }
 

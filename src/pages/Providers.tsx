@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getCategoriesTree } from "@/services/categoriesService";
@@ -62,6 +62,7 @@ export function Providers() {
     search: "",
     status: "",
     category: "",
+    subcategory: "",
     rating: undefined,
   });
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -142,6 +143,28 @@ export function Providers() {
     });
   });
 
+  const subcategoryFilterOptions = useMemo(() => {
+    const out: { value: string; label: string; parentId: string }[] = [];
+    (categories ?? []).forEach((c: ServiceCatalogCategory) => {
+      if (!c?.id) return;
+      const parentId = String(c.id);
+      const parentLabel = c.name ?? c.name_en ?? parentId;
+      (c.subcategories ?? []).forEach((s) => {
+        if (!s?.id) return;
+        if (filters.category && parentId !== filters.category) return;
+        out.push({
+          value: String(s.id),
+          parentId,
+          label: t("providers.subcategoryFilterLabel", {
+            parent: parentLabel,
+            name: s.name ?? s.name_en ?? s.id,
+          }),
+        });
+      });
+    });
+    return out;
+  }, [categories, filters.category, t]);
+
   const statusOptions = [
     { value: "", label: t("providers.activeOnly") },
     { value: "all", label: t("providers.allStatuses") },
@@ -193,12 +216,38 @@ export function Providers() {
             value={filters.category ?? ""}
             onChange={(e) => {
               const v = e.target.value;
-              setFilters((f) => ({ ...f, category: v === "" ? undefined : v, page: 1 }));
+              setFilters((f) => {
+                const nextCat = v === "" ? undefined : v;
+                let sub = f.subcategory;
+                if (nextCat && sub) {
+                  const catObj = categories.find((c) => String(c.id) === nextCat);
+                  const validSubIds = new Set(
+                    (catObj?.subcategories ?? []).map((s) => String(s.id))
+                  );
+                  if (!validSubIds.has(sub)) sub = undefined;
+                }
+                return { ...f, category: nextCat, subcategory: sub, page: 1 };
+              });
             }}
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[180px]"
           >
             <option value="">{t("providers.allCategoriesAndSubcategories")}</option>
             {categoryFilterOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filters.subcategory ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              setFilters((f) => ({ ...f, subcategory: v === "" ? undefined : v, page: 1 }));
+            }}
+            className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[200px]"
+          >
+            <option value="">{t("providers.allSubcategories")}</option>
+            {subcategoryFilterOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>

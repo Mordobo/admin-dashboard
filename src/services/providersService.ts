@@ -21,6 +21,7 @@ function buildParams(params: ProviderListParams): Record<string, string | number
   if (params.search != null && params.search !== "") out.search = params.search;
   if (params.status != null && params.status !== "") out.status = params.status;
   if (params.category != null && params.category !== "") out.category = params.category;
+  if (params.subcategory != null && params.subcategory !== "") out.subcategory = params.subcategory;
   if (params.rating != null) out.rating = params.rating;
   return out;
 }
