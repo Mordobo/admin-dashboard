@@ -289,7 +289,7 @@
     "rejected": "Rejected",
     "allCategories": "All categories",
     "allCategoriesAndSubcategories": "All categories & subcategories",
-    "filterOptionParentCategory": "{{name}} (category)",
+    "filterOptionParentCategory": "{{name}}",
     "filterOptionSubcategory": "{{name}}",
     "allSubcategories": "All subcategories",
     "subcategoryFilterLabel": "{{parent}} — {{name}}",
