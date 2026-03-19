@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getCategoriesTree } from "@/services/categoriesService";
@@ -62,6 +62,7 @@ export function Providers() {
     search: "",
     status: "",
     category: "",
+    subcategory: "",
     rating: undefined,
   });
   const [detailId, setDetailId] = useState<string | null>(null);
@@ -75,7 +76,8 @@ export function Providers() {
 
   const { data: listData, isLoading: listLoading } = useQuery({
     queryKey: ["providers-list", filters],
-    queryFn: () => fetchProviders(filters),
+    // Read filters from queryKey to avoid any stale-closure mismatches.
+    queryFn: ({ queryKey }) => fetchProviders(queryKey[1] as ProviderListParams),
   });
 
   const { data: detail, isLoading: detailLoading } = useQuery({
@@ -126,12 +128,42 @@ export function Providers() {
   const limit = listData?.limit ?? 20;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const categoryOptions: { value: string; label: string }[] = (categories ?? [])
-    .filter((c: ServiceCatalogCategory) => c?.id)
-    .map((c: ServiceCatalogCategory) => ({
+  const categoryFilterOptions: { value: string; label: string }[] = [];
+  // Category filter should only show parent categories (NOT subcategories).
+  (categories ?? []).forEach((c: ServiceCatalogCategory) => {
+    if (!c?.id) return;
+    categoryFilterOptions.push({
       value: String(c.id),
-      label: c.name ?? c.name_en ?? String(c.id),
-    }));
+      label: t("providers.filterOptionParentCategory", { name: c.name ?? c.name_en ?? c.id }),
+    });
+  });
+
+  const subcategoryFilterOptions = useMemo(() => {
+    // Subcategory dropdown is dependent on the selected category.
+    if (!filters.category) return [];
+    const out: { value: string; label: string; parentId: string }[] = [];
+    const seen = new Set<string>();
+    (categories ?? []).forEach((c: ServiceCatalogCategory) => {
+      if (!c?.id) return;
+      const parentId = String(c.id);
+      const parentLabel = c.name ?? c.name_en ?? parentId;
+      (c.subcategories ?? []).forEach((s) => {
+        if (!s?.id) return;
+        if (parentId !== filters.category) return;
+        if (seen.has(String(s.id))) return;
+        seen.add(String(s.id));
+        out.push({
+          value: String(s.id),
+          parentId,
+          label: t("providers.subcategoryFilterLabel", {
+            parent: parentLabel,
+            name: s.name ?? s.name_en ?? s.id,
+          }),
+        });
+      });
+    });
+    return out;
+  }, [categories, filters.category, t]);
 
   const statusOptions = [
     { value: "", label: t("providers.activeOnly") },
@@ -184,12 +216,32 @@ export function Providers() {
             value={filters.category ?? ""}
             onChange={(e) => {
               const v = e.target.value;
-              setFilters((f) => ({ ...f, category: v === "" ? undefined : v, page: 1 }));
+              setFilters((f) => {
+                const nextCat = v === "" ? undefined : v;
+                // Mutual exclusivity: choosing category clears subcategory.
+                return { ...f, category: nextCat, subcategory: undefined, page: 1 };
+              });
             }}
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[180px]"
           >
             <option value="">{t("providers.allCategories")}</option>
-            {categoryOptions.map((opt) => (
+            {categoryFilterOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filters.subcategory ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              setFilters((f) => ({ ...f, subcategory: v === "" ? undefined : v, page: 1 }));
+            }}
+            disabled={!filters.category}
+            className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[200px] disabled:opacity-50"
+          >
+            <option value="">{t("providers.allSubcategories")}</option>
+            {subcategoryFilterOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -223,7 +275,8 @@ export function Providers() {
                   <tr className="border-b border-mordobo-border text-left text-mordobo-textSecondary">
                     <th className="pb-3 pr-4 font-medium">{t("users.id")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("users.name")}</th>
-                    <th className="pb-3 pr-4 font-medium">{t("providers.serviceCategory")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("providers.parentCategoryColumn")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("providers.subcategoryColumn")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("users.location")}</th>
                     <th className="pb-3 pr-4 font-medium text-right">Rating</th>
                     <th className="pb-3 pr-4 font-medium text-right">{t("providers.totalJobs")}</th>
@@ -243,7 +296,10 @@ export function Providers() {
                       </td>
                       <td className="py-3 pr-4 text-mordobo-text">{p.name || p.email}</td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">
-                        {p.service_category ?? "—"}
+                        {p.parent_category_name ?? "—"}
+                      </td>
+                      <td className="py-3 pr-4 text-mordobo-textSecondary">
+                        {p.subcategory_name ?? "—"}
                       </td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">{p.location ?? "—"}</td>
                       <td className="py-3 pr-4 text-right text-mordobo-text">
@@ -561,8 +617,8 @@ function ProviderDetailPanel({
       <section>
         <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("providers.profile")}</h4>
         <p className="text-sm text-mordobo-textSecondary">
-          {profile.bio || t("providers.noBio")} · {t("users.location")}: {profile.location ?? "—"} · {t("providers.serviceCategory")}:{" "}
-          {profile.service_category ?? "—"}
+          {profile.bio || t("providers.noBio")} · {t("users.location")}: {profile.location ?? "—"} · {t("providers.parentCategoryColumn")}:{" "}
+          {profile.parent_category_name ?? "—"} · {t("providers.subcategoryColumn")}: {profile.subcategory_name ?? "—"}
         </p>
         {profile.hourly_rate != null && (
           <p className="text-sm text-mordobo-textSecondary">{t("providers.hourlyRate")} {formatMoney(profile.hourly_rate)}</p>
