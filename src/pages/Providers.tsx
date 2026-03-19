@@ -76,7 +76,8 @@ export function Providers() {
 
   const { data: listData, isLoading: listLoading } = useQuery({
     queryKey: ["providers-list", filters],
-    queryFn: () => fetchProviders(filters),
+    // Read filters from queryKey to avoid any stale-closure mismatches.
+    queryFn: ({ queryKey }) => fetchProviders(queryKey[1] as ProviderListParams),
   });
 
   const { data: detail, isLoading: detailLoading } = useQuery({
@@ -141,6 +142,7 @@ export function Providers() {
     // Subcategory dropdown is dependent on the selected category.
     if (!filters.category) return [];
     const out: { value: string; label: string; parentId: string }[] = [];
+    const seen = new Set<string>();
     (categories ?? []).forEach((c: ServiceCatalogCategory) => {
       if (!c?.id) return;
       const parentId = String(c.id);
@@ -148,6 +150,8 @@ export function Providers() {
       (c.subcategories ?? []).forEach((s) => {
         if (!s?.id) return;
         if (parentId !== filters.category) return;
+        if (seen.has(String(s.id))) return;
+        seen.add(String(s.id));
         out.push({
           value: String(s.id),
           parentId,
