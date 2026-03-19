@@ -292,7 +292,7 @@
     "filterOptionParentCategory": "{{name}}",
     "filterOptionSubcategory": "{{name}}",
     "allSubcategories": "Todas las subcategorías",
-    "subcategoryFilterLabel": "{{parent}} — {{name}}",
+    "subcategoryFilterLabel": "{{name}}",
     "parentCategoryColumn": "Categoría",
     "subcategoryColumn": "Subcategoría",
     "minRating": "Valoración mín.",
