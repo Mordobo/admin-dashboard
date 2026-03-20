@@ -587,7 +587,7 @@ function UserDetailPanel({
               <tbody>
                 {booking_history.slice(0, 20).map((b) => (
                   <tr key={b.id} className="border-b border-mordobo-border/50">
-                    <td className="py-1.5 pr-2 text-mordobo-text">{formatDate(b.created_at)}</td>
+                    <td className="py-1.5 pr-2 text-mordobo-text">{formatDate(b.scheduled_at ?? b.created_at)}</td>
                     <td className="py-1.5 pr-2 text-mordobo-textSecondary">
                       {b.service_name ?? "—"}
                     </td>
