@@ -478,6 +478,8 @@ export interface ProviderJobHistoryItem {
   payment_status: string | null;
   service_name: string | null;
   scheduled_at: string | null;
+  activity_at: string;
+  review_created_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -604,6 +606,8 @@ export interface ClientBookingItem {
   order_status: string;
   total_amount: number | null;
   scheduled_at: string | null;
+  activity_at: string;
+  review_created_at: string | null;
   created_at: string;
   updated_at: string;
   service_name: string | null;
