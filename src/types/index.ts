@@ -477,6 +477,7 @@ export interface ProviderJobHistoryItem {
   payment_amount: number | null;
   payment_status: string | null;
   service_name: string | null;
+  scheduled_at: string | null;
   created_at: string;
   updated_at: string;
 }
