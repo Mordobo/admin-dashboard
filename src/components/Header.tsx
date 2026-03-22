@@ -57,7 +57,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             title={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
             aria-label={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
           >
-            {currentLngIsSpanish ? "EN" : "ES"}
+            {currentLngIsSpanish ? "ES" : "EN"}
           </button>
           <button
             type="button"

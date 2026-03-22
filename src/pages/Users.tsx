@@ -12,9 +12,9 @@ import {
 import type { ClientListItem, ClientDetail, ClientListParams } from "@/types";
 import { Badge } from "@/components/Badge";
 
-function formatDate(iso: string): string {
+function formatDate(iso: string, locale: string): string {
   try {
-    return new Date(iso).toLocaleDateString("en-US", {
+    return new Date(iso).toLocaleDateString(locale, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -24,6 +24,20 @@ function formatDate(iso: string): string {
   } catch {
     return iso;
   }
+}
+
+function userAccountStatusLabel(t: (key: string) => string, status: string): string {
+  const key =
+    status === "active"
+      ? "users.statusActive"
+      : status === "suspended"
+        ? "users.statusSuspended"
+        : status === "banned"
+          ? "users.statusBanned"
+          : status === "pending"
+            ? "users.statusPending"
+            : "";
+  return key ? t(key) : status;
 }
 
 function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" | "accent" {
@@ -41,7 +55,7 @@ function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" 
 }
 
 export function Users() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<ClientListParams>({
     page: 1,
@@ -219,10 +233,10 @@ export function Users() {
                       <td className="py-3 pr-4 text-mordobo-textSecondary">{u.phone ?? "—"}</td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">{u.location ?? "—"}</td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">
-                        {formatDate(u.registration_date)}
+                        {formatDate(u.registration_date, i18n.language)}
                       </td>
                       <td className="py-3 pr-4">
-                        <Badge color={statusBadgeColor(u.status)}>{u.status}</Badge>
+                        <Badge color={statusBadgeColor(u.status)}>{userAccountStatusLabel(t, u.status)}</Badge>
                       </td>
                       <td className="py-3">
                         <div className="flex flex-wrap gap-1">
@@ -498,7 +512,7 @@ function UserDetailPanel({
   statusMutationPending: boolean;
   resetPasswordPending: boolean;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { profile, booking_history, reviews_given, payment_methods, addresses, activity_log } =
     detail;
   const name = profile.full_name || profile.email || "—";
@@ -523,7 +537,7 @@ function UserDetailPanel({
               {profile.date_of_birth ? ` · DOB: ${profile.date_of_birth}` : ""}
             </p>
             <div className="flex flex-wrap gap-2 mt-2">
-              <Badge color={statusBadgeColor(profile.status)}>{profile.status}</Badge>
+              <Badge color={statusBadgeColor(profile.status)}>{userAccountStatusLabel(t, profile.status)}</Badge>
             </div>
           </div>
         </div>
@@ -587,7 +601,9 @@ function UserDetailPanel({
               <tbody>
                 {booking_history.slice(0, 20).map((b) => (
                   <tr key={b.id} className="border-b border-mordobo-border/50">
-                    <td className="py-1.5 pr-2 text-mordobo-text">{formatDate(b.activity_at ?? b.scheduled_at ?? b.created_at)}</td>
+                    <td className="py-1.5 pr-2 text-mordobo-text">
+                      {formatDate(b.activity_at ?? b.scheduled_at ?? b.created_at, i18n.language)}
+                    </td>
                     <td className="py-1.5 pr-2 text-mordobo-textSecondary">
                       {b.service_name ?? "—"}
                     </td>
@@ -614,7 +630,7 @@ function UserDetailPanel({
                 <span className="text-mordobo-text">{r.rating}★</span>{" "}
                 <span className="text-mordobo-textSecondary">{r.comment ?? "—"}</span> —{" "}
                 <span className="text-mordobo-textMuted">{r.supplier_name ?? "Provider"}</span> ·{" "}
-                {formatDate(r.created_at)}
+                {formatDate(r.created_at, i18n.language)}
               </li>
             ))}
           </ul>
@@ -665,7 +681,7 @@ function UserDetailPanel({
                     by {a.admin_name || a.admin_email}
                   </span>
                 ) : null}{" "}
-                · {formatDate(a.created_at)}
+                · {formatDate(a.created_at, i18n.language)}
                 {a.details && Object.keys(a.details).length > 0 && (
                   <span className="text-mordobo-textSecondary">
                     {" "}
