@@ -28,11 +28,23 @@ function getApiErrorMessage(error: unknown): string {
 }
 
 const STATUS_OPTIONS: ContentStatus[] = ["draft", "published"];
-const STATUS_LABELS: Record<ContentStatus, string> = { draft: "Draft", published: "Published" };
 const STATUS_COLORS: Record<ContentStatus, "warning" | "success"> = { draft: "warning", published: "success" };
 
+function localizedFaqText(
+  preferEs: boolean,
+  en?: string | null,
+  es?: string | null,
+  fallback: string,
+): string {
+  if (preferEs) return (es || en || fallback).trim() || fallback;
+  return (en || es || fallback).trim() || fallback;
+}
+
 export function FaqsSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const preferEs = (i18n.language ?? "").startsWith("es");
+  const statusLabel = (s: ContentStatus) =>
+    s === "draft" ? t("content.statusDraft") : t("content.statusPublished");
   const queryClient = useQueryClient();
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -247,7 +259,7 @@ export function FaqsSection() {
             </div>
             <div>
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                Status
+                {t("common.status")}
               </label>
               <select
                 value={newCategoryStatus}
@@ -256,7 +268,7 @@ export function FaqsSection() {
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
-                    {STATUS_LABELS[s]}
+                    {statusLabel(s)}
                   </option>
                 ))}
               </select>
@@ -273,7 +285,7 @@ export function FaqsSection() {
               onClick={() => setCategoryFormOpen(false)}
               className="py-2.5 px-5 bg-mordobo-surface border border-mordobo-border rounded-xl text-sm font-semibold text-mordobo-text cursor-pointer hover:bg-mordobo-surfaceHover"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="button"
@@ -305,10 +317,10 @@ export function FaqsSection() {
                 </span>
                 <div className="min-w-0">
                   <div className="font-medium text-mordobo-text truncate">
-                    {cat.title_en || cat.title_es || "Untitled category"}
+                    {localizedFaqText(preferEs, cat.title_en, cat.title_es, t("content.untitledCategory"))}
                   </div>
                   <div className="text-xs text-mordobo-textMuted">
-                    {(cat.questions?.length ?? 0)} question(s)
+                    {t("content.faqQuestionCount", { count: cat.questions?.length ?? 0 })}
                     {(cat.status === "published" &&
                       (cat.questions ?? []).filter((q) => q.status === "published").length === 0 &&
                       (cat.questions?.length ?? 0) > 0) && (
@@ -319,7 +331,7 @@ export function FaqsSection() {
                   </div>
                 </div>
                 <Badge color={STATUS_COLORS[cat.status ?? "draft"]}>
-                  {STATUS_LABELS[(cat.status as ContentStatus) ?? "draft"]}
+                  {statusLabel((cat.status as ContentStatus) ?? "draft")}
                 </Badge>
               </div>
               <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -333,14 +345,14 @@ export function FaqsSection() {
                       disabled={updateCategoryMutation.isPending}
                       className="text-mordobo-accentLight text-sm hover:underline"
                     >
-                      Save
+                      {t("common.save")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingCategoryId(null)}
                       className="text-mordobo-textMuted text-sm hover:underline"
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                   </>
                 ) : (
@@ -397,7 +409,7 @@ export function FaqsSection() {
                   </div>
                   <div>
                     <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                      Status
+                      {t("common.status")}
                     </label>
                     <select
                       value={editCategoryStatus}
@@ -406,7 +418,7 @@ export function FaqsSection() {
                     >
                       {STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s}>
-                          {STATUS_LABELS[s]}
+                          {statusLabel(s)}
                         </option>
                       ))}
                     </select>
@@ -460,7 +472,7 @@ export function FaqsSection() {
                       </div>
                       <div>
                         <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                          Status
+                          {t("common.status")}
                         </label>
                         <select
                           value={newQuestionStatus}
@@ -469,7 +481,7 @@ export function FaqsSection() {
                         >
                           {STATUS_OPTIONS.map((s) => (
                             <option key={s} value={s}>
-                              {STATUS_LABELS[s]}
+                              {statusLabel(s)}
                             </option>
                           ))}
                         </select>
@@ -514,7 +526,9 @@ export function FaqsSection() {
                           className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
                         />
                         <div>
-                          <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">Status</label>
+                          <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
+                            {t("common.status")}
+                          </label>
                           <select
                             value={editQuestionStatus}
                             onChange={(e) => setEditQuestionStatus(e.target.value as ContentStatus)}
@@ -522,7 +536,7 @@ export function FaqsSection() {
                           >
                             {STATUS_OPTIONS.map((s) => (
                               <option key={s} value={s}>
-                                {STATUS_LABELS[s]}
+                                {statusLabel(s)}
                               </option>
                             ))}
                           </select>
@@ -539,14 +553,14 @@ export function FaqsSection() {
                             disabled={updateQuestionMutation.isPending}
                             className="text-mordobo-accentLight text-sm"
                           >
-                            Save
+                            {t("common.save")}
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditingQuestionId(null)}
                             className="text-mordobo-textMuted text-sm"
                           >
-                            Cancel
+                            {t("common.cancel")}
                           </button>
                         </div>
                       </>
@@ -555,11 +569,16 @@ export function FaqsSection() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="font-medium text-mordobo-text m-0">
-                              {q.question_en || q.question_es || "Untitled question"}
+                              {localizedFaqText(
+                                preferEs,
+                                q.question_en,
+                                q.question_es,
+                                t("content.untitledQuestion"),
+                              )}
                             </p>
                             <span className="mt-1 inline-block">
                               <Badge color={STATUS_COLORS[(q.status as ContentStatus) ?? "draft"]}>
-                                {STATUS_LABELS[(q.status as ContentStatus) ?? "draft"]}
+                                {statusLabel((q.status as ContentStatus) ?? "draft")}
                               </Badge>
                             </span>
                           </div>
@@ -611,7 +630,9 @@ export function FaqsSection() {
                                     className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
                                   />
                                   <div>
-                                    <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">Status</label>
+                                    <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
+                                      {t("common.status")}
+                                    </label>
                                     <select
                                       value={editAnswerStatus}
                                       onChange={(e) => setEditAnswerStatus(e.target.value as ContentStatus)}
@@ -619,7 +640,7 @@ export function FaqsSection() {
                                     >
                                       {STATUS_OPTIONS.map((s) => (
                                         <option key={s} value={s}>
-                                          {STATUS_LABELS[s]}
+                                          {statusLabel(s)}
                                         </option>
                                       ))}
                                     </select>
@@ -637,14 +658,14 @@ export function FaqsSection() {
                                       disabled={updateAnswerMutation.isPending}
                                       className="text-mordobo-accentLight text-sm"
                                     >
-                                      Save
+                                      {t("common.save")}
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => setEditingAnswerId(null)}
                                       className="text-mordobo-textMuted text-sm"
                                     >
-                                      Cancel
+                                      {t("common.cancel")}
                                     </button>
                                   </div>
                                 </div>
@@ -701,7 +722,9 @@ export function FaqsSection() {
                                 className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
                               />
                               <div>
-                                <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">Status</label>
+                                <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
+                                  {t("common.status")}
+                                </label>
                                 <select
                                   value={newAnswerStatus}
                                   onChange={(e) => setNewAnswerStatus(e.target.value as ContentStatus)}
@@ -709,7 +732,7 @@ export function FaqsSection() {
                                 >
                                   {STATUS_OPTIONS.map((s) => (
                                     <option key={s} value={s}>
-                                      {STATUS_LABELS[s]}
+                                      {statusLabel(s)}
                                     </option>
                                   ))}
                                 </select>
@@ -726,14 +749,14 @@ export function FaqsSection() {
                                   disabled={createAnswerMutation.isPending}
                                   className="text-mordobo-accentLight text-sm"
                                 >
-                                  Add
+                                  {t("common.add")}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setAddingAnswerQuestionId(null)}
                                   className="text-mordobo-textMuted text-sm"
                                 >
-                                  Cancel
+                                  {t("common.cancel")}
                                 </button>
                               </div>
                             </div>
@@ -743,7 +766,7 @@ export function FaqsSection() {
                               onClick={() => setAddingAnswerQuestionId(q.id)}
                               className="text-mordobo-textMuted text-xs hover:underline"
                             >
-                              + Add answer
+                              {t("content.addAnswer")}
                             </button>
                           )}
                         </div>
