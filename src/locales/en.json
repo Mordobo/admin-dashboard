@@ -21,6 +21,10 @@
     "switchToEn": "Switch to English",
     "switchToEs": "Switch to Spanish"
   },
+  "globalSearch": {
+    "noResults": "No matching sections. Try another keyword.",
+    "clear": "Clear search"
+  },
   "dashboard": {
     "pendingOnboarding": "Pending Onboarding",
     "openComplaints": "Open Complaints",

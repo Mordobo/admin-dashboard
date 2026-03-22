@@ -21,6 +21,10 @@
     "switchToEn": "Cambiar a inglés",
     "switchToEs": "Cambiar a español"
   },
+  "globalSearch": {
+    "noResults": "No hay secciones que coincidan. Prueba otra palabra clave.",
+    "clear": "Borrar búsqueda"
+  },
   "dashboard": {
     "pendingOnboarding": "Onboarding pendiente",
     "openComplaints": "Quejas abiertas",

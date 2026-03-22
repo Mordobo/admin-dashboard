@@ -659,7 +659,7 @@ function ProviderDetailPanel({
               <tbody>
                 {job_history.slice(0, 20).map((j) => (
                   <tr key={j.id} className="border-b border-mordobo-border/50">
-                    <td className="py-1.5 pr-2 text-mordobo-text">{formatDate(j.scheduled_at ?? j.created_at)}</td>
+                    <td className="py-1.5 pr-2 text-mordobo-text">{formatDate(j.activity_at ?? j.scheduled_at ?? j.created_at)}</td>
                     <td className="py-1.5 pr-2 text-mordobo-textSecondary">{j.service_name ?? "—"}</td>
                     <td className="py-1.5 pr-2">{j.order_status}</td>
                     <td className="py-1.5 text-right text-mordobo-text">
