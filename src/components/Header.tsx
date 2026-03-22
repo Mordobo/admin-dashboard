@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { NAV_ITEMS } from "@/utils/constants";
 import { useState } from "react";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -17,7 +18,6 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const { logout } = useAuth();
-  const [search, setSearch] = useState("");
   const [notificationsCount] = useState(0);
 
   const currentLngIsSpanish = isSpanish(i18n.language);
@@ -47,13 +47,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               {notificationsCount}
             </span>
           </button>
-          <input
-            type="search"
-            placeholder={t("nav.searchPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="py-2 px-4 w-[280px] bg-mordobo-bg border border-mordobo-border rounded-lg text-sm text-mordobo-text placeholder:text-mordobo-textMuted focus:outline-none focus:ring-2 focus:ring-mordobo-accent/50"
-          />
+          <GlobalSearch />
         </div>
         <div className="flex items-center gap-2">
           <button

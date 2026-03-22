@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { AdminUsersSection } from "./settings/AdminUsersSection";
 import { PlatformConfigSection } from "./settings/PlatformConfigSection";
 import { EmailTemplatesSection } from "./settings/EmailTemplatesSection";
@@ -14,9 +14,21 @@ const TAB_KEYS = [
 
 type TabId = (typeof TAB_KEYS)[number]["id"];
 
+const VALID_TABS = new Set<TabId>(TAB_KEYS.map((t) => t.id));
+
+function tabFromSearchParams(raw: string | null): TabId {
+  if (raw && VALID_TABS.has(raw as TabId)) return raw as TabId;
+  return "users";
+}
+
 export function SystemSettings() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<TabId>("users");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = tabFromSearchParams(searchParams.get("tab"));
+
+  const setActiveTab = (tab: TabId) => {
+    setSearchParams({ tab }, { replace: true });
+  };
 
   return (
     <div>
