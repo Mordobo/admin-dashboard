@@ -14,6 +14,12 @@ import type { ProviderListItem, ProviderDetail, ProviderListParams } from "@/typ
 import type { ServiceCatalogCategory } from "@/types";
 import { Badge } from "@/components/Badge";
 import { StatCard } from "@/components/StatCard";
+import {
+  buildCategoryLookup,
+  localizedCatalogName,
+  normalizeEnumKey,
+  prefersSpanishLanguage,
+} from "@/utils/adminLocale";
 
 
 function formatDate(iso: string): string {
@@ -39,7 +45,8 @@ function formatMoney(n: number): string {
 }
 
 function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" | "accent" {
-  switch (s) {
+  const n = normalizeEnumKey(s);
+  switch (n) {
     case "active":
       return "success";
     case "suspended":
@@ -53,9 +60,15 @@ function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" 
   }
 }
 
+function translateProviderStatus(t: (key: string, options?: { defaultValue?: string }) => string, raw: string): string {
+  const n = normalizeEnumKey(raw);
+  return t(`providers.statusLabels.${n}`, { defaultValue: raw });
+}
+
 export function Providers() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
+  const preferEs = prefersSpanishLanguage(i18n.language);
   const [filters, setFilters] = useState<ProviderListParams>({
     page: 1,
     limit: 20,
@@ -128,13 +141,19 @@ export function Providers() {
   const limit = listData?.limit ?? 20;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
+  const { rowCategoryDisplay } = useMemo(
+    () => buildCategoryLookup(categories ?? [], preferEs),
+    [categories, preferEs]
+  );
+
   const categoryFilterOptions: { value: string; label: string }[] = [];
   // Category filter should only show parent categories (NOT subcategories).
   (categories ?? []).forEach((c: ServiceCatalogCategory) => {
     if (!c?.id) return;
+    const display = localizedCatalogName(c, preferEs) || String(c.id);
     categoryFilterOptions.push({
       value: String(c.id),
-      label: t("providers.filterOptionParentCategory", { name: c.name ?? c.name_en ?? c.id }),
+      label: t("providers.filterOptionParentCategory", { name: display }),
     });
   });
 
@@ -146,24 +165,21 @@ export function Providers() {
     (categories ?? []).forEach((c: ServiceCatalogCategory) => {
       if (!c?.id) return;
       const parentId = String(c.id);
-      const parentLabel = c.name ?? c.name_en ?? parentId;
       (c.subcategories ?? []).forEach((s) => {
         if (!s?.id) return;
         if (parentId !== filters.category) return;
         if (seen.has(String(s.id))) return;
         seen.add(String(s.id));
+        const subLabel = localizedCatalogName(s, preferEs) || String(s.id);
         out.push({
           value: String(s.id),
           parentId,
-          label: t("providers.subcategoryFilterLabel", {
-            parent: parentLabel,
-            name: s.name ?? s.name_en ?? s.id,
-          }),
+          label: t("providers.subcategoryFilterLabel", { name: subLabel }),
         });
       });
     });
     return out;
-  }, [categories, filters.category, t]);
+  }, [categories, filters.category, preferEs, t]);
 
   const statusOptions = [
     { value: "", label: t("providers.activeOnly") },
@@ -278,7 +294,7 @@ export function Providers() {
                     <th className="pb-3 pr-4 font-medium">{t("providers.parentCategoryColumn")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("providers.subcategoryColumn")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("users.location")}</th>
-                    <th className="pb-3 pr-4 font-medium text-right">Rating</th>
+                    <th className="pb-3 pr-4 font-medium text-right">{t("providers.ratingColumn")}</th>
                     <th className="pb-3 pr-4 font-medium text-right">{t("providers.totalJobs")}</th>
                     <th className="pb-3 pr-4 font-medium text-right">{t("reports.earnings")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("common.status")}</th>
@@ -286,7 +302,14 @@ export function Providers() {
                   </tr>
                 </thead>
                 <tbody>
-                  {providers.map((p: ProviderListItem) => (
+                  {providers.map((p: ProviderListItem) => {
+                    const { parent: catParent, sub: catSub } = rowCategoryDisplay(
+                      p.service_category_id,
+                      p.parent_category_name,
+                      p.subcategory_name
+                    );
+                    const statusNorm = normalizeEnumKey(p.status);
+                    return (
                     <tr
                       key={p.id}
                       className="border-b border-mordobo-border last:border-0 hover:bg-mordobo-surfaceHover/30"
@@ -296,10 +319,10 @@ export function Providers() {
                       </td>
                       <td className="py-3 pr-4 text-mordobo-text">{p.name || p.email}</td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">
-                        {p.parent_category_name ?? "—"}
+                        {catParent}
                       </td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">
-                        {p.subcategory_name ?? "—"}
+                        {catSub}
                       </td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">{p.location ?? "—"}</td>
                       <td className="py-3 pr-4 text-right text-mordobo-text">
@@ -311,7 +334,7 @@ export function Providers() {
                       </td>
                       <td className="py-3 pr-4">
                         <div className="flex flex-wrap gap-1 items-center">
-                          <Badge color={statusBadgeColor(p.status)}>{p.status}</Badge>
+                          <Badge color={statusBadgeColor(p.status)}>{translateProviderStatus(t, p.status)}</Badge>
                           {p.verified && (
                             <span className="text-xs text-mordobo-accentLight" title="Verified">
                               ✓
@@ -338,13 +361,13 @@ export function Providers() {
                             onClick={() =>
                               statusMutation.mutate({
                                 id: p.id,
-                                status: p.status === "suspended" ? "active" : "suspended",
+                                status: statusNorm === "suspended" ? "active" : "suspended",
                               })
                             }
                             disabled={statusMutation.isPending}
                             className="text-mordobo-warning text-xs font-medium hover:underline disabled:opacity-50"
                           >
-                            {p.status === "suspended" ? t("providers.activate") : t("providers.suspend")}
+                            {statusNorm === "suspended" ? t("providers.activate") : t("providers.suspend")}
                           </button>
                           <button
                             type="button"
@@ -377,7 +400,8 @@ export function Providers() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -424,12 +448,13 @@ export function Providers() {
           ) : detail ? (
             <ProviderDetailPanel
               detail={detail}
+              rowCategoryDisplay={rowCategoryDisplay}
               onClose={() => setDetailId(null)}
               onStatusChange={() =>
                 statusMutation.mutate({
                   id: detail.profile.id,
                   status:
-                    detail.profile.status === "suspended" ? "active" : "suspended",
+                    normalizeEnumKey(detail.profile.status) === "suspended" ? "active" : "suspended",
                 })
               }
               onVerify={() => verifyMutation.mutate(detail.profile.id)}
@@ -505,6 +530,7 @@ export function Providers() {
 
 function ProviderDetailPanel({
   detail,
+  rowCategoryDisplay,
   onClose,
   onStatusChange,
   onVerify,
@@ -515,6 +541,11 @@ function ProviderDetailPanel({
   featureMutationPending,
 }: {
   detail: ProviderDetail;
+  rowCategoryDisplay: (
+    serviceCategoryId: string | null | undefined,
+    fallbackParent: string | null | undefined,
+    fallbackSub: string | null | undefined
+  ) => { parent: string; sub: string };
   onClose: () => void;
   onStatusChange: () => void;
   onVerify: () => void;
@@ -527,6 +558,12 @@ function ProviderDetailPanel({
   const { t } = useTranslation();
   const { profile, services, job_history, reviews, documents, earnings_breakdown } = detail;
   const name = profile.business_name?.trim() || profile.full_name || profile.email || "—";
+  const { parent: detailCatParent, sub: detailCatSub } = rowCategoryDisplay(
+    profile.service_category_id,
+    profile.parent_category_name,
+    profile.subcategory_name
+  );
+  const profileStatusNorm = normalizeEnumKey(profile.status);
 
   return (
     <div className="space-y-6">
@@ -544,7 +581,7 @@ function ProviderDetailPanel({
             <p className="text-sm text-mordobo-textSecondary">{profile.email}</p>
             <p className="text-sm text-mordobo-textSecondary">{profile.phone_number ?? "—"}</p>
             <div className="flex flex-wrap gap-2 mt-2">
-              <Badge color={statusBadgeColor(profile.status)}>{profile.status}</Badge>
+              <Badge color={statusBadgeColor(profile.status)}>{translateProviderStatus(t, profile.status)}</Badge>
               {profile.verified && <Badge color="accent">{t("providers.verified")}</Badge>}
               {profile.is_featured && <Badge color="warning">{t("providers.featured")}</Badge>}
             </div>
@@ -566,7 +603,7 @@ function ProviderDetailPanel({
           disabled={statusMutationPending}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
-          {profile.status === "suspended" ? t("providers.activate") : t("providers.suspend")}
+          {profileStatusNorm === "suspended" ? t("providers.activate") : t("providers.suspend")}
         </button>
         <button
           type="button"
@@ -618,7 +655,7 @@ function ProviderDetailPanel({
         <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("providers.profile")}</h4>
         <p className="text-sm text-mordobo-textSecondary">
           {profile.bio || t("providers.noBio")} · {t("users.location")}: {profile.location ?? "—"} · {t("providers.parentCategoryColumn")}:{" "}
-          {profile.parent_category_name ?? "—"} · {t("providers.subcategoryColumn")}: {profile.subcategory_name ?? "—"}
+          {detailCatParent} · {t("providers.subcategoryColumn")}: {detailCatSub}
         </p>
         {profile.hourly_rate != null && (
           <p className="text-sm text-mordobo-textSecondary">{t("providers.hourlyRate")} {formatMoney(profile.hourly_rate)}</p>
@@ -683,7 +720,7 @@ function ProviderDetailPanel({
               <li key={r.id} className="text-sm border-b border-mordobo-border/50 pb-2">
                 <span className="text-mordobo-text">{r.rating}★</span>{" "}
                 <span className="text-mordobo-textSecondary">{r.comment ?? "—"}</span> —{" "}
-                <span className="text-mordobo-textMuted">{r.client_name ?? "Client"}</span> ·{" "}
+                <span className="text-mordobo-textMuted">{r.client_name ?? t("providers.client")}</span> ·{" "}
                 {formatDate(r.created_at)}
               </li>
             ))}

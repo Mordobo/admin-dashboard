@@ -293,7 +293,31 @@
     "refundReason": "Motivo (requerido)",
     "refundAmount": "Importe (opcional, vacío = total)",
     "noRelatedOrder": "Sin pedido relacionado",
-    "noRelatedOrderMessage": "Esta queja no tiene pedido vinculado. Los reembolsos solo están disponibles cuando el ticket está vinculado a un pedido con pago."
+    "noRelatedOrderMessage": "Esta queja no tiene pedido vinculado. Los reembolsos solo están disponibles cuando el ticket está vinculado a un pedido con pago.",
+    "typeLabels": {
+      "complaint": "Queja",
+      "claim": "Reclamación",
+      "suggestion": "Sugerencia"
+    },
+    "priorityLabels": {
+      "critical": "Crítica",
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja"
+    },
+    "statusLabels": {
+      "open": "Abierto",
+      "in_progress": "En curso",
+      "resolved": "Resuelto",
+      "closed": "Cerrado",
+      "escalated": "Escalado"
+    },
+    "senderTypes": {
+      "admin": "Administración",
+      "client": "Cliente",
+      "provider": "Proveedor"
+    },
+    "quickActionsHint": "Para contactar al cliente o suspender al proveedor, usa las secciones Usuarios o Proveedores."
   },
   "users": {
     "title": "Gestión de usuarios",
@@ -399,7 +423,14 @@
     "noReviewsYet": "Aún no hay reseñas",
     "client": "Cliente",
     "documents": "Documentos",
-    "editCommissionDefault": "Editar comisión (por defecto)"
+    "editCommissionDefault": "Editar comisión (por defecto)",
+    "ratingColumn": "Valoración",
+    "statusLabels": {
+      "active": "Activo",
+      "suspended": "Suspendido",
+      "pending_verification": "Pendiente de verificación",
+      "rejected": "Rechazado"
+    }
   },
   "transactions": {
     "title": "Transacciones",

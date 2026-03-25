@@ -293,7 +293,31 @@
     "refundReason": "Reason (required)",
     "refundAmount": "Amount (optional, leave empty for full)",
     "noRelatedOrder": "No related order",
-    "noRelatedOrderMessage": "This complaint has no linked order. Refunds are only available when the ticket is linked to an order with a payment."
+    "noRelatedOrderMessage": "This complaint has no linked order. Refunds are only available when the ticket is linked to an order with a payment.",
+    "typeLabels": {
+      "complaint": "Complaint",
+      "claim": "Claim",
+      "suggestion": "Suggestion"
+    },
+    "priorityLabels": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "statusLabels": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed",
+      "escalated": "Escalated"
+    },
+    "senderTypes": {
+      "admin": "Admin",
+      "client": "Client",
+      "provider": "Provider"
+    },
+    "quickActionsHint": "To contact the client or suspend the provider, use the Users or Providers sections."
   },
   "users": {
     "title": "Users Management",
@@ -399,7 +423,14 @@
     "noReviewsYet": "No reviews yet",
     "client": "Client",
     "documents": "Documents",
-    "editCommissionDefault": "Edit commission (default)"
+    "editCommissionDefault": "Edit commission (default)",
+    "ratingColumn": "Rating",
+    "statusLabels": {
+      "active": "Active",
+      "suspended": "Suspended",
+      "pending_verification": "Pending verification",
+      "rejected": "Rejected"
+    }
   },
   "transactions": {
     "title": "Transactions",
