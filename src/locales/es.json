@@ -376,6 +376,8 @@
     "searchPlaceholder": "Buscar por nombre o servicio",
     "activeOnly": "Solo activos",
     "allStatuses": "Todos los estados",
+    "pendingAll": "Pendientes (todos)",
+    "pendingOnboarding": "Alta en curso",
     "pendingVerification": "Pendiente de verificación",
     "rejected": "Rechazado",
     "allCategories": "Todas las categorías",
@@ -428,6 +430,7 @@
     "statusLabels": {
       "active": "Activo",
       "suspended": "Suspendido",
+      "pending": "Alta en curso",
       "pending_verification": "Pendiente de verificación",
       "rejected": "Rechazado"
     }
