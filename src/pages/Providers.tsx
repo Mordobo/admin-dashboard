@@ -51,6 +51,8 @@ function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" 
       return "success";
     case "suspended":
       return "danger";
+    case "pending":
+      return "warning";
     case "pending_verification":
       return "warning";
     case "rejected":
@@ -186,6 +188,8 @@ export function Providers() {
     { value: "all", label: t("providers.allStatuses") },
     { value: "active", label: t("common.active") },
     { value: "suspended", label: t("users.suspended") },
+    { value: "pending_all", label: t("providers.pendingAll") },
+    { value: "pending", label: t("providers.pendingOnboarding") },
     { value: "pending_verification", label: t("providers.pendingVerification") },
     { value: "rejected", label: t("providers.rejected") },
   ];
