@@ -6,6 +6,7 @@ import {
   fetchProviders,
   fetchProvider,
   updateProviderStatus,
+  deleteProvider,
   toggleProviderVerify,
   toggleProviderFeature,
   updateProviderCommission,
@@ -50,7 +51,10 @@ function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" 
     case "active":
       return "success";
     case "suspended":
+    case "banned":
       return "danger";
+    case "deleted":
+      return "info";
     case "pending":
       return "warning";
     case "pending_verification":
@@ -60,6 +64,14 @@ function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" 
     default:
       return "accent";
   }
+}
+
+function isProviderDeletedStatus(raw: string): boolean {
+  return normalizeEnumKey(raw) === "deleted";
+}
+
+function isProviderBannedStatus(raw: string): boolean {
+  return normalizeEnumKey(raw) === "banned";
 }
 
 function translateProviderStatus(t: (key: string, options?: { defaultValue?: string }) => string, raw: string): string {
@@ -83,6 +95,12 @@ export function Providers() {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [commissionModal, setCommissionModal] = useState<{ id: string; current: number | null } | null>(null);
   const [commissionInput, setCommissionInput] = useState("");
+  const [providerDeleteStep, setProviderDeleteStep] = useState<{
+    id: string;
+    name: string;
+    step: 1 | 2;
+  } | null>(null);
+  const [providerDeleteTypeConfirm, setProviderDeleteTypeConfirm] = useState("");
 
   const { data: categories = [] } = useQuery({
     queryKey: ["admin-categories-tree"],
@@ -102,11 +120,22 @@ export function Providers() {
   });
 
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "active" | "suspended" }) =>
+    mutationFn: ({ id, status }: { id: string; status: "active" | "suspended" | "banned" }) =>
       updateProviderStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["providers-list"] });
       if (detailId) queryClient.invalidateQueries({ queryKey: ["provider-detail", detailId] });
+    },
+  });
+
+  const deleteProviderMutation = useMutation({
+    mutationFn: (id: string) => deleteProvider(id),
+    onSuccess: (_data, deletedId) => {
+      setProviderDeleteStep(null);
+      setProviderDeleteTypeConfirm("");
+      setDetailId(null);
+      queryClient.invalidateQueries({ queryKey: ["providers-list"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-detail", deletedId] });
     },
   });
 
@@ -188,11 +217,19 @@ export function Providers() {
     { value: "all", label: t("providers.allStatuses") },
     { value: "active", label: t("common.active") },
     { value: "suspended", label: t("users.suspended") },
+    { value: "banned", label: t("users.banned") },
+    { value: "deleted", label: t("users.deleted") },
     { value: "pending_all", label: t("providers.pendingAll") },
     { value: "pending", label: t("providers.pendingOnboarding") },
     { value: "pending_verification", label: t("providers.pendingVerification") },
     { value: "rejected", label: t("providers.rejected") },
   ];
+
+  const handleProviderDeleteConfirm = useCallback(() => {
+    if (!providerDeleteStep || providerDeleteStep.step !== 2) return;
+    if (providerDeleteTypeConfirm.trim().toLowerCase() !== "delete") return;
+    deleteProviderMutation.mutate(providerDeleteStep.id);
+  }, [providerDeleteStep, providerDeleteTypeConfirm, deleteProviderMutation]);
 
   const handleCommissionSubmit = useCallback(() => {
     if (!commissionModal) return;
@@ -368,10 +405,41 @@ export function Providers() {
                                 status: statusNorm === "suspended" ? "active" : "suspended",
                               })
                             }
-                            disabled={statusMutation.isPending}
+                            disabled={
+                              statusMutation.isPending ||
+                              isProviderDeletedStatus(p.status) ||
+                              isProviderBannedStatus(p.status)
+                            }
                             className="text-mordobo-warning text-xs font-medium hover:underline disabled:opacity-50"
                           >
                             {statusNorm === "suspended" ? t("providers.activate") : t("providers.suspend")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              statusMutation.mutate({
+                                id: p.id,
+                                status: isProviderBannedStatus(p.status) ? "active" : "banned",
+                              })
+                            }
+                            disabled={statusMutation.isPending || isProviderDeletedStatus(p.status)}
+                            className="text-mordobo-danger text-xs font-medium hover:underline disabled:opacity-50"
+                          >
+                            {isProviderBannedStatus(p.status) ? t("providers.unban") : t("providers.ban")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setProviderDeleteStep({
+                                id: p.id,
+                                name: p.name || p.email || p.id,
+                                step: 1,
+                              })
+                            }
+                            disabled={isProviderDeletedStatus(p.status)}
+                            className="text-mordobo-textSecondary text-xs font-medium hover:underline disabled:opacity-50"
+                          >
+                            {t("providers.deleteProvider")}
                           </button>
                           <button
                             type="button"
@@ -454,11 +522,29 @@ export function Providers() {
               detail={detail}
               rowCategoryDisplay={rowCategoryDisplay}
               onClose={() => setDetailId(null)}
-              onStatusChange={() =>
+              onSuspendToggle={() => {
+                const s = normalizeEnumKey(detail.profile.status);
                 statusMutation.mutate({
                   id: detail.profile.id,
-                  status:
-                    normalizeEnumKey(detail.profile.status) === "suspended" ? "active" : "suspended",
+                  status: s === "suspended" ? "active" : "suspended",
+                });
+              }}
+              onBanToggle={() => {
+                const s = normalizeEnumKey(detail.profile.status);
+                statusMutation.mutate({
+                  id: detail.profile.id,
+                  status: s === "banned" ? "active" : "banned",
+                });
+              }}
+              onDelete={() =>
+                setProviderDeleteStep({
+                  id: detail.profile.id,
+                  name:
+                    detail.profile.business_name?.trim() ||
+                    detail.profile.full_name ||
+                    detail.profile.email ||
+                    detail.profile.id,
+                  step: 1,
                 })
               }
               onVerify={() => verifyMutation.mutate(detail.profile.id)}
@@ -528,6 +614,93 @@ export function Providers() {
           </div>
         </div>
       )}
+
+      {providerDeleteStep && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => {
+            if (!deleteProviderMutation.isPending) {
+              setProviderDeleteStep(null);
+              setProviderDeleteTypeConfirm("");
+            }
+          }}
+        >
+          <div
+            className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6 shadow-xl max-w-sm w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {providerDeleteStep.step === 1 ? (
+              <>
+                <h3 className="text-lg font-semibold text-mordobo-text mb-2">
+                  {t("providers.deleteProviderConfirm")}
+                </h3>
+                <p className="text-sm text-mordobo-textSecondary mb-4">
+                  {t("providers.deleteProviderMessage")}
+                </p>
+                <p className="text-sm text-mordobo-text mb-4 font-medium">{providerDeleteStep.name}</p>
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setProviderDeleteStep(null)}
+                    className="rounded-xl border border-mordobo-border px-4 py-2 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setProviderDeleteStep((s) => (s ? { ...s, step: 2 } : null))
+                    }
+                    className="rounded-xl bg-mordobo-warning text-white px-4 py-2 text-sm font-medium hover:opacity-90"
+                  >
+                    {t("users.continue")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-mordobo-danger mb-2">{t("users.doubleConfirmation")}</h3>
+                <p className="text-sm text-mordobo-textSecondary mb-2">
+                  {t("users.typeDeleteToConfirm", { name: providerDeleteStep.name })}
+                </p>
+                <input
+                  type="text"
+                  placeholder={t("users.typeDeletePlaceholder")}
+                  value={providerDeleteTypeConfirm}
+                  onChange={(e) => setProviderDeleteTypeConfirm(e.target.value)}
+                  className="w-full rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none mb-4"
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProviderDeleteStep((s) => (s ? { ...s, step: 1 } : null));
+                      setProviderDeleteTypeConfirm("");
+                    }}
+                    disabled={deleteProviderMutation.isPending}
+                    className="rounded-xl border border-mordobo-border px-4 py-2 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
+                  >
+                    {t("users.back")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleProviderDeleteConfirm}
+                    disabled={
+                      deleteProviderMutation.isPending ||
+                      providerDeleteTypeConfirm.trim().toLowerCase() !== "delete"
+                    }
+                    className="rounded-xl bg-mordobo-danger text-white px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                  >
+                    {deleteProviderMutation.isPending
+                      ? t("providers.deletingProvider")
+                      : t("providers.deleteProvider")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -536,7 +709,9 @@ function ProviderDetailPanel({
   detail,
   rowCategoryDisplay,
   onClose,
-  onStatusChange,
+  onSuspendToggle,
+  onBanToggle,
+  onDelete,
   onVerify,
   onFeature,
   onEditCommission,
@@ -551,7 +726,9 @@ function ProviderDetailPanel({
     fallbackSub: string | null | undefined
   ) => { parent: string; sub: string };
   onClose: () => void;
-  onStatusChange: () => void;
+  onSuspendToggle: () => void;
+  onBanToggle: () => void;
+  onDelete: () => void;
   onVerify: () => void;
   onFeature: () => void;
   onEditCommission: () => void;
@@ -568,9 +745,15 @@ function ProviderDetailPanel({
     profile.subcategory_name
   );
   const profileStatusNorm = normalizeEnumKey(profile.status);
+  const providerDeleted = isProviderDeletedStatus(profile.status);
 
   return (
     <div className="space-y-6">
+      {providerDeleted && (
+        <p className="text-sm text-mordobo-warning border border-mordobo-warning/40 rounded-xl px-3 py-2 bg-mordobo-warning/10">
+          {t("users.accountDeletedHint")}
+        </p>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           {profile.profile_image_url && (
@@ -603,16 +786,37 @@ function ProviderDetailPanel({
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={onStatusChange}
-          disabled={statusMutationPending}
+          onClick={onSuspendToggle}
+          disabled={
+            statusMutationPending ||
+            providerDeleted ||
+            profileStatusNorm === "banned"
+          }
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
           {profileStatusNorm === "suspended" ? t("providers.activate") : t("providers.suspend")}
         </button>
         <button
           type="button"
+          onClick={onBanToggle}
+          disabled={statusMutationPending || providerDeleted}
+          className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
+        >
+          {profileStatusNorm === "banned" ? t("providers.unban") : t("providers.ban")}
+        </button>
+        {!providerDeleted && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="rounded-xl border border-mordobo-danger/50 bg-mordobo-danger/10 px-3 py-1.5 text-sm text-mordobo-danger hover:bg-mordobo-danger/20"
+          >
+            {t("providers.deleteProvider")}
+          </button>
+        )}
+        <button
+          type="button"
           onClick={onVerify}
-          disabled={verifyMutationPending}
+          disabled={verifyMutationPending || providerDeleted}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
           {profile.verified ? t("providers.unverify") : t("providers.verify")}
@@ -620,7 +824,7 @@ function ProviderDetailPanel({
         <button
           type="button"
           onClick={onFeature}
-          disabled={featureMutationPending}
+          disabled={featureMutationPending || providerDeleted}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
           {profile.is_featured ? t("providers.unfeature") : t("providers.feature")}
@@ -628,7 +832,8 @@ function ProviderDetailPanel({
         <button
           type="button"
           onClick={onEditCommission}
-          className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover"
+          disabled={providerDeleted}
+          className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
           {profile.commission_rate != null ? `${t("providers.commission")} (${(profile.commission_rate * 100).toFixed(0)}%)` : t("providers.editCommissionDefault")}
         </button>

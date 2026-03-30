@@ -53,9 +53,13 @@ export async function fetchProvider(id: string): Promise<ProviderDetail | null> 
 
 export async function updateProviderStatus(
   id: string,
-  status: "active" | "suspended"
+  status: "active" | "suspended" | "banned"
 ): Promise<void> {
   await api.put(`${BASE}/${id}/status`, { status });
+}
+
+export async function deleteProvider(id: string): Promise<void> {
+  await api.delete(`${BASE}/${id}`);
 }
 
 export async function toggleProviderVerify(id: string): Promise<void> {

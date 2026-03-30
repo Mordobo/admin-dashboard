@@ -26,6 +26,10 @@ function formatDate(iso: string, locale: string): string {
   }
 }
 
+function isClientSoftDeleted(u: { status: string; deleted_at?: string | null }): boolean {
+  return u.status === "deleted" || (u.deleted_at != null && String(u.deleted_at).length > 0);
+}
+
 function userAccountStatusLabel(t: (key: string) => string, status: string): string {
   const key =
     status === "active"
@@ -34,9 +38,11 @@ function userAccountStatusLabel(t: (key: string) => string, status: string): str
         ? "users.statusSuspended"
         : status === "banned"
           ? "users.statusBanned"
-          : status === "pending"
-            ? "users.statusPending"
-            : "";
+          : status === "deleted"
+            ? "users.statusDeleted"
+            : status === "pending"
+              ? "users.statusPending"
+              : "";
   return key ? t(key) : status;
 }
 
@@ -47,6 +53,8 @@ function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" 
     case "suspended":
     case "banned":
       return "danger";
+    case "deleted":
+      return "info";
     case "pending":
       return "warning";
     default:
@@ -92,8 +100,10 @@ export function Users() {
     mutationFn: ({
       id,
       status,
-    }: { id: string; status: "active" | "suspended" | "banned" }) =>
-      updateUserStatus(id, status),
+    }: {
+      id: string;
+      status: "active" | "suspended" | "banned";
+    }) => updateUserStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users-list"] });
       if (detailId) queryClient.invalidateQueries({ queryKey: ["user-detail", detailId] });
@@ -152,6 +162,7 @@ export function Users() {
     { value: "active", label: t("common.active") },
     { value: "suspended", label: t("users.suspended") },
     { value: "banned", label: t("users.banned") },
+    { value: "deleted", label: t("users.deleted") },
     { value: "pending", label: t("users.pending") },
   ];
 
@@ -252,25 +263,38 @@ export function Users() {
                             onClick={() =>
                               statusMutation.mutate({
                                 id: u.id,
-                                status:
-                                  u.status === "suspended" || u.status === "banned"
-                                    ? "active"
-                                    : "suspended",
+                                status: u.status === "suspended" ? "active" : "suspended",
                               })
                             }
-                            disabled={statusMutation.isPending}
+                            disabled={
+                              statusMutation.isPending ||
+                              isClientSoftDeleted(u) ||
+                              u.status === "banned"
+                            }
                             className="text-mordobo-warning text-xs font-medium hover:underline disabled:opacity-50"
                           >
-                            {u.status === "suspended" || u.status === "banned"
-                              ? t("users.activate")
-                              : t("users.suspend")}
+                            {u.status === "suspended" ? t("users.activate") : t("users.suspend")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              statusMutation.mutate({
+                                id: u.id,
+                                status: u.status === "banned" ? "active" : "banned",
+                              })
+                            }
+                            disabled={statusMutation.isPending || isClientSoftDeleted(u)}
+                            className="text-mordobo-danger text-xs font-medium hover:underline disabled:opacity-50"
+                          >
+                            {u.status === "banned" ? t("users.unban") : t("users.ban")}
                           </button>
                           <button
                             type="button"
                             onClick={() =>
                               setNotifyModal({ id: u.id, name: u.name || u.email })
                             }
-                            className="text-mordobo-textSecondary text-xs font-medium hover:underline"
+                            disabled={isClientSoftDeleted(u)}
+                            className="text-mordobo-textSecondary text-xs font-medium hover:underline disabled:opacity-50"
                           >
                             {t("users.notify")}
                           </button>
@@ -325,14 +349,18 @@ export function Users() {
             <UserDetailPanel
               detail={detail}
               onClose={() => setDetailId(null)}
-              onStatusChange={() =>
+              onSuspendToggle={() =>
                 detail &&
                 statusMutation.mutate({
                   id: detail.profile.id,
-                  status:
-                    detail.profile.status === "suspended" || detail.profile.status === "banned"
-                      ? "active"
-                      : "suspended",
+                  status: detail.profile.status === "suspended" ? "active" : "suspended",
+                })
+              }
+              onBanToggle={() =>
+                detail &&
+                statusMutation.mutate({
+                  id: detail.profile.id,
+                  status: detail.profile.status === "banned" ? "active" : "banned",
                 })
               }
               onNotify={() =>
@@ -496,7 +524,8 @@ export function Users() {
 function UserDetailPanel({
   detail,
   onClose,
-  onStatusChange,
+  onSuspendToggle,
+  onBanToggle,
   onNotify,
   onResetPassword,
   onDelete,
@@ -505,7 +534,8 @@ function UserDetailPanel({
 }: {
   detail: ClientDetail;
   onClose: () => void;
-  onStatusChange: () => void;
+  onSuspendToggle: () => void;
+  onBanToggle: () => void;
   onNotify: () => void;
   onResetPassword: () => void;
   onDelete: () => void;
@@ -516,9 +546,15 @@ function UserDetailPanel({
   const { profile, booking_history, reviews_given, payment_methods, addresses, activity_log } =
     detail;
   const name = profile.full_name || profile.email || "—";
+  const softDeleted = isClientSoftDeleted(profile);
 
   return (
     <div className="space-y-6">
+      {softDeleted && (
+        <p className="text-sm text-mordobo-warning border border-mordobo-warning/40 rounded-xl px-3 py-2 bg-mordobo-warning/10">
+          {t("users.accountDeletedHint")}
+        </p>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           {profile.profile_image && (
@@ -553,34 +589,45 @@ function UserDetailPanel({
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={onStatusChange}
-          disabled={statusMutationPending}
+          onClick={onSuspendToggle}
+          disabled={statusMutationPending || softDeleted || profile.status === "banned"}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
-          {profile.status === "suspended" || profile.status === "banned" ? t("users.activate") : t("users.suspend")}
+          {profile.status === "suspended" ? t("users.activate") : t("users.suspend")}
+        </button>
+        <button
+          type="button"
+          onClick={onBanToggle}
+          disabled={statusMutationPending || softDeleted}
+          className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
+        >
+          {profile.status === "banned" ? t("users.unban") : t("users.ban")}
         </button>
         <button
           type="button"
           onClick={onNotify}
-          className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover"
+          disabled={softDeleted}
+          className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
           {t("users.notify")}
         </button>
         <button
           type="button"
           onClick={onResetPassword}
-          disabled={resetPasswordPending}
+          disabled={resetPasswordPending || softDeleted}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
           {resetPasswordPending ? t("users.sending") : t("users.resetPassword")}
         </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          className="rounded-xl border border-mordobo-danger/50 bg-mordobo-danger/10 px-3 py-1.5 text-sm text-mordobo-danger hover:bg-mordobo-danger/20"
-        >
-          {t("users.deleteAccountButton")}
-        </button>
+        {!softDeleted && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="rounded-xl border border-mordobo-danger/50 bg-mordobo-danger/10 px-3 py-1.5 text-sm text-mordobo-danger hover:bg-mordobo-danger/20"
+          >
+            {t("users.deleteAccountButton")}
+          </button>
+        )}
       </div>
 
       <section>

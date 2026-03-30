@@ -565,7 +565,7 @@ export interface ReorderPayload {
 }
 
 // --- Users Management (Backoffice client accounts) ---
-export type ClientAccountStatus = "active" | "suspended" | "banned" | "pending";
+export type ClientAccountStatus = "active" | "suspended" | "banned" | "pending" | "deleted";
 
 export interface ClientListItem {
   id: string;
@@ -575,6 +575,8 @@ export interface ClientListItem {
   location: string | null;
   registration_date: string;
   status: string;
+  /** Set when account was soft-deleted (status should be `deleted`) */
+  deleted_at?: string | null;
 }
 
 export interface ClientListParams {
@@ -595,6 +597,7 @@ export interface ClientProfile {
   country: string | null;
   profile_image: string | null;
   status: string;
+  deleted_at?: string | null;
   created_at: string;
   updated_at: string | null;
   date_of_birth: string | null;
