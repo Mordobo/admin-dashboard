@@ -325,6 +325,8 @@
     "allStatuses": "Todos los estados",
     "deleted": "Eliminado (lógico)",
     "suspended": "Suspendido",
+    "filterSuspendedOrBanned": "Suspendido o baneado (sin acceso)",
+    "bannedOnly": "Solo baneados",
     "banned": "Baneado",
     "ban": "Banear",
     "unban": "Quitar baneo",
