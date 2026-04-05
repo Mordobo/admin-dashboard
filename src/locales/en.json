@@ -325,6 +325,8 @@
     "allStatuses": "All statuses",
     "deleted": "Deleted (soft)",
     "suspended": "Suspended",
+    "filterSuspendedOrBanned": "Suspended or banned (blocked login)",
+    "bannedOnly": "Banned only",
     "banned": "Banned",
     "ban": "Ban",
     "unban": "Unban",
