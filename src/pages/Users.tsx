@@ -160,8 +160,9 @@ export function Users() {
   const statusOptions = [
     { value: "", label: t("users.allStatuses") },
     { value: "active", label: t("common.active") },
-    { value: "suspended", label: t("users.filterSuspendedOrBanned") },
-    { value: "banned", label: t("users.bannedOnly") },
+    { value: "suspended", label: t("users.suspended") },
+    { value: "banned", label: t("users.banned") },
+    { value: "blocked", label: t("users.filterBlockedLogin") },
     { value: "deleted", label: t("users.deleted") },
     { value: "pending", label: t("users.pending") },
   ];

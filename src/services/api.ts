@@ -1,7 +1,11 @@
 import axios, { type AxiosError } from "axios";
 import { STORAGE_KEYS } from "@/utils/constants";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") || "http://localhost:3000";
+/** Default: Mordobo API on Render (QA). Override with VITE_API_BASE_URL in .env for local API. */
+const DEFAULT_CLOUD_API_BASE = "https://mordobo-api-qa.onrender.com";
+
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") || DEFAULT_CLOUD_API_BASE;
 
 export const api = axios.create({
   baseURL: API_BASE,
