@@ -15,8 +15,8 @@
     "backoffice": "Backoffice",
     "searchPlaceholder": "Buscar...",
     "logout": "Cerrar sesión",
-    "superAdmin": "Super Admin",
-    "admin": "Admin",
+    "superAdmin": "Superadministrador",
+    "admin": "Administrador",
     "moderator": "Moderador",
     "switchToEn": "Cambiar a inglés",
     "switchToEs": "Cambiar a español"
@@ -35,7 +35,26 @@
     "viewAll": "Ver todo →",
     "loading": "Cargando…",
     "noRecentRequests": "No hay solicitudes recientes.",
-    "noRecentComplaints": "No hay quejas o sugerencias recientes."
+    "noRecentComplaints": "No hay quejas o sugerencias recientes.",
+    "onboardingStatus": {
+      "pending": "Pendiente",
+      "in_review": "En revisión",
+      "approved": "Aprobado",
+      "rejected": "Rechazado"
+    },
+    "complaintPriority": {
+      "critical": "Crítica",
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja"
+    },
+    "userRole": {
+      "client": "Cliente",
+      "provider": "Proveedor",
+      "admin": "Administrador",
+      "moderator": "Moderador",
+      "super_admin": "Superadministrador"
+    }
   },
   "common": {
     "save": "Guardar",
@@ -54,6 +73,34 @@
     "description": "Descripción",
     "status": "Estado",
     "actions": "Acciones"
+  },
+  "catalog": {
+    "names": {
+      "home_and_repairs": "Hogar y reparaciones",
+      "cleaning": "Limpieza",
+      "beauty_and_personal_care": "Belleza y cuidado personal",
+      "vehicles": "Vehículos",
+      "technology_and_tech_support": "Tecnología y soporte técnico",
+      "moving_and_transportation": "Mudanzas y transporte",
+      "gardening_and_outdoors": "Jardinería y exteriores",
+      "pets": "Mascotas",
+      "events": "Eventos",
+      "health_and_wellness": "Salud y bienestar",
+      "education_and_classes": "Educación y clases",
+      "business_and_professional_services": "Servicios empresariales y profesionales",
+      "specialized_installations": "Instalaciones especializadas",
+      "domestic_services": "Servicios domésticos",
+      "other_services": "Otros servicios",
+      "plumbing": "Fontanería",
+      "electrical": "Electricidad",
+      "carpentry": "Carpintería",
+      "masonry_light_construction": "Albañilería / obra ligera",
+      "painting": "Pintura",
+      "locksmith": "Cerrajería",
+      "door_and_window_installation": "Instalación de puertas y ventanas",
+      "roof_repair": "Reparación de tejados",
+      "leak_sealing": "Sellado de fugas"
+    }
   },
   "servicesCategories": {
     "title": "Servicios y categorías",
@@ -190,7 +237,11 @@
     "jobs": "Trabajos",
     "orders": "Pedidos",
     "earnings": "Ganancias",
-    "date": "Fecha"
+    "date": "Fecha",
+    "chartTooltipUsers": "Usuarios",
+    "chartTooltipJobs": "Trabajos",
+    "chartTooltipRevenue": "Ingresos",
+    "chartDateLabel": "Fecha: {{date}}"
   },
   "onboarding": {
     "backToList": "← Volver al listado",
@@ -394,7 +445,7 @@
     "subcategoryFilterLabel": "{{name}}",
     "parentCategoryColumn": "Categoría",
     "subcategoryColumn": "Subcategoría",
-    "minRating": "Valoración mín.",
+    "minRating": "Mín. valoración",
     "loadingProviders": "Cargando proveedores…",
     "noMatch": "Ningún proveedor coincide con los filtros.",
     "serviceCategory": "Categoría de servicio",
@@ -433,8 +484,8 @@
     "documents": "Documentos",
     "editCommissionDefault": "Editar comisión (por defecto)",
     "ratingColumn": "Valoración",
-    "ban": "Banear",
-    "unban": "Quitar baneo",
+    "ban": "Bloquear",
+    "unban": "Desbloquear",
     "deleteProvider": "Eliminar proveedor",
     "deleteProviderConfirm": "¿Eliminar cuenta de proveedor?",
     "deleteProviderMessage": "El proveedor pasará a estado eliminado. No podrá usar la app de proveedor. Usa el filtro \"Eliminado\" para verlo. No es lo mismo que baneado.",
@@ -447,7 +498,16 @@
       "pending": "Alta en curso",
       "pending_verification": "Pendiente de verificación",
       "rejected": "Rechazado"
-    }
+    },
+    "jobOrderStatus": {
+      "completed": "Completado",
+      "cancelled": "Cancelado",
+      "pending": "Pendiente",
+      "in_progress": "En curso",
+      "failed": "Fallido"
+    },
+    "verifiedBadgeTitle": "Verificado",
+    "featuredBadgeTitle": "Destacado"
   },
   "transactions": {
     "title": "Transacciones",
@@ -487,7 +547,50 @@
     "statusCompleted": "Completado",
     "statusPending": "Pendiente",
     "statusRefunded": "Reembolsado",
-    "statusFailed": "Fallido"
+    "statusFailed": "Fallido",
+    "statusCancelled": "Cancelado",
+    "detailIdLabel": "ID",
+    "detailJobReference": "Referencia de trabajo",
+    "detailDate": "Fecha",
+    "detailPaymentMethod": "Método de pago",
+    "detailClient": "Cliente",
+    "detailProvider": "Proveedor",
+    "detailService": "Servicio",
+    "detailStatus": "Estado",
+    "detailPaymentBreakdown": "Desglose de pago",
+    "detailLineAmount": "Importe",
+    "detailPlatformFeeLine": "Comisión de plataforma",
+    "detailRefundSection": "Reembolso",
+    "detailRefundedOn": "el {{date}}",
+    "issueRefundCta": "Emitir reembolso",
+    "flagForReview": "Marcar para revisión",
+    "unflagForReview": "Quitar marca de revisión",
+    "refundModalTitle": "Emitir reembolso",
+    "refundModalBody": "Importe de la transacción: {{amount}}. Deja el importe vacío para reembolso total.",
+    "refundAmountPlaceholder": "Importe del reembolso (opcional)",
+    "refundReasonPlaceholder": "Motivo del reembolso (obligatorio)",
+    "refundConfirm": "Confirmar reembolso",
+    "refundProcessing": "Procesando…"
+  },
+  "contentLegal": {
+    "loading": "Cargando documento…",
+    "title": "Documentos legales",
+    "documentType": "Tipo de documento",
+    "contentEnglish": "Contenido (inglés)",
+    "contentSpanish": "Contenido (español)",
+    "placeholderEn": "Contenido HTML en inglés",
+    "placeholderEs": "Contenido HTML en español",
+    "save": "Guardar (crea una nueva versión)",
+    "saving": "Guardando…",
+    "lastUpdated": "Última actualización: {{datetime}}",
+    "saveFailed": "Error al guardar",
+    "versionHistory": "Historial de versiones",
+    "savedAtColumn": "Guardado el",
+    "noVersions": "Aún no hay versiones. Guarda el documento para crear la primera versión.",
+    "docTerms": "Términos del servicio",
+    "docPrivacy": "Política de privacidad",
+    "docProvider": "Acuerdo de proveedor",
+    "docCookies": "Política de cookies"
   },
   "settings": {
     "title": "Configuración del sistema",
@@ -508,6 +611,11 @@
     "user": "Usuario",
     "lastLogin": "Último acceso",
     "deactivate": "Desactivar",
+    "adminStatus": {
+      "active": "Activo",
+      "invited": "Invitado",
+      "inactive": "Inactivo"
+    },
     "platform": {
       "title": "Configuración de la plataforma",
       "loading": "Cargando configuración de la plataforma…",

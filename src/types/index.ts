@@ -341,7 +341,7 @@ export interface TopProviderRow {
 }
 
 // --- Transactions (Backoffice) ---
-export type TransactionStatus = "completed" | "pending" | "refunded" | "failed";
+export type TransactionStatus = "completed" | "pending" | "refunded" | "failed" | "cancelled";
 
 export interface TransactionListItem {
   id: string;

@@ -17,33 +17,12 @@ import { Badge } from "@/components/Badge";
 import { StatCard } from "@/components/StatCard";
 import {
   buildCategoryLookup,
-  localizedCatalogName,
+  catalogItemDisplayName,
   normalizeEnumKey,
   prefersSpanishLanguage,
+  translateFreeformCatalogName,
 } from "@/utils/adminLocale";
-
-
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-function formatMoney(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(n);
-}
+import { adminFormatCurrency, adminFormatDateTime } from "@/utils/localeFormat";
 
 function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" | "accent" {
   const n = normalizeEnumKey(s);
@@ -79,10 +58,22 @@ function translateProviderStatus(t: (key: string, options?: { defaultValue?: str
   return t(`providers.statusLabels.${n}`, { defaultValue: raw });
 }
 
+function translateJobOrderStatus(
+  t: (key: string, options?: { defaultValue?: string }) => string,
+  raw: string | null | undefined
+): string {
+  if (!raw?.trim()) return "—";
+  const n = normalizeEnumKey(raw);
+  return t(`providers.jobOrderStatus.${n}`, { defaultValue: raw });
+}
+
 export function Providers() {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
-  const preferEs = prefersSpanishLanguage(i18n.language);
+  const preferEs = prefersSpanishLanguage(i18n.resolvedLanguage ?? i18n.language);
+  const locale = i18n.resolvedLanguage ?? i18n.language;
+  const formatDate = useCallback((iso: string) => adminFormatDateTime(locale, iso), [locale]);
+  const formatMoney = useCallback((n: number) => adminFormatCurrency(locale, n), [locale]);
   const [filters, setFilters] = useState<ProviderListParams>({
     page: 1,
     limit: 20,
@@ -173,15 +164,15 @@ export function Providers() {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   const { rowCategoryDisplay } = useMemo(
-    () => buildCategoryLookup(categories ?? [], preferEs),
-    [categories, preferEs]
+    () => buildCategoryLookup(categories ?? [], preferEs, t),
+    [categories, preferEs, t]
   );
 
   const categoryFilterOptions: { value: string; label: string }[] = [];
   // Category filter should only show parent categories (NOT subcategories).
   (categories ?? []).forEach((c: ServiceCatalogCategory) => {
     if (!c?.id) return;
-    const display = localizedCatalogName(c, preferEs) || String(c.id);
+    const display = catalogItemDisplayName(t, c, preferEs) || String(c.id);
     categoryFilterOptions.push({
       value: String(c.id),
       label: t("providers.filterOptionParentCategory", { name: display }),
@@ -201,7 +192,7 @@ export function Providers() {
         if (parentId !== filters.category) return;
         if (seen.has(String(s.id))) return;
         seen.add(String(s.id));
-        const subLabel = localizedCatalogName(s, preferEs) || String(s.id);
+        const subLabel = catalogItemDisplayName(t, s, preferEs) || String(s.id);
         out.push({
           value: String(s.id),
           parentId,
@@ -318,7 +309,7 @@ export function Providers() {
                 page: 1,
               }))
             }
-            className="w-24 rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none"
+            className="min-w-[148px] w-[148px] shrink-0 rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none"
           />
         </div>
 
@@ -377,12 +368,12 @@ export function Providers() {
                         <div className="flex flex-wrap gap-1 items-center">
                           <Badge color={statusBadgeColor(p.status)}>{translateProviderStatus(t, p.status)}</Badge>
                           {p.verified && (
-                            <span className="text-xs text-mordobo-accentLight" title="Verified">
+                            <span className="text-xs text-mordobo-accentLight" title={t("providers.verifiedBadgeTitle")}>
                               ✓
                             </span>
                           )}
                           {p.is_featured && (
-                            <span className="text-xs text-mordobo-warning" title="Featured">
+                            <span className="text-xs text-mordobo-warning" title={t("providers.featuredBadgeTitle")}>
                               ★
                             </span>
                           )}
@@ -521,6 +512,8 @@ export function Providers() {
             <ProviderDetailPanel
               detail={detail}
               rowCategoryDisplay={rowCategoryDisplay}
+              formatDate={formatDate}
+              formatMoney={formatMoney}
               onClose={() => setDetailId(null)}
               onSuspendToggle={() => {
                 const s = normalizeEnumKey(detail.profile.status);
@@ -708,6 +701,8 @@ export function Providers() {
 function ProviderDetailPanel({
   detail,
   rowCategoryDisplay,
+  formatDate,
+  formatMoney,
   onClose,
   onSuspendToggle,
   onBanToggle,
@@ -725,6 +720,8 @@ function ProviderDetailPanel({
     fallbackParent: string | null | undefined,
     fallbackSub: string | null | undefined
   ) => { parent: string; sub: string };
+  formatDate: (iso: string) => string;
+  formatMoney: (n: number) => string;
   onClose: () => void;
   onSuspendToggle: () => void;
   onBanToggle: () => void;
@@ -880,7 +877,7 @@ function ProviderDetailPanel({
             {services.map((svc) => (
               <li key={svc.id}>
                 {svc.name} {svc.price != null ? `— ${formatMoney(svc.price)}` : ""}
-                {svc.category_name ? ` (${svc.category_name})` : ""}
+                {svc.category_name ? ` (${translateFreeformCatalogName(t, svc.category_name)})` : ""}
               </li>
             ))}
           </ul>
@@ -907,7 +904,7 @@ function ProviderDetailPanel({
                   <tr key={j.id} className="border-b border-mordobo-border/50">
                     <td className="py-1.5 pr-2 text-mordobo-text">{formatDate(j.activity_at ?? j.scheduled_at ?? j.created_at)}</td>
                     <td className="py-1.5 pr-2 text-mordobo-textSecondary">{j.service_name ?? "—"}</td>
-                    <td className="py-1.5 pr-2">{j.order_status}</td>
+                    <td className="py-1.5 pr-2">{translateJobOrderStatus(t, j.order_status)}</td>
                     <td className="py-1.5 text-right text-mordobo-text">
                       {j.payment_amount != null ? formatMoney(j.payment_amount) : "—"}
                     </td>

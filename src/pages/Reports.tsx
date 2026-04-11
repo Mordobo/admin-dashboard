@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -24,6 +24,8 @@ import {
   downloadReport,
 } from "@/services/reportsService";
 import type { ReportPeriod } from "@/types";
+import { translateFreeformCatalogName } from "@/utils/adminLocale";
+import { adminFormatCurrency } from "@/utils/localeFormat";
 
 
 function getReportParams(period: ReportPeriod, from: string, to: string) {
@@ -41,7 +43,8 @@ const PERIOD_OPTIONS: { value: ReportPeriod; labelKey: string }[] = [
 ];
 
 export function Reports() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const [period, setPeriod] = useState<ReportPeriod>("month");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
@@ -107,6 +110,17 @@ export function Reports() {
   const jobsByCategory = jobsData?.byCategory ?? [];
   const revenueSeries = revenueData?.series ?? [];
 
+  const jobsByCategoryChart = useMemo(
+    () =>
+      jobsByCategory.map((row) => ({
+        ...row,
+        categoryName: translateFreeformCatalogName(t, row.categoryName ?? ""),
+      })),
+    [jobsByCategory, t, i18n.language]
+  );
+
+  const formatMoney = useCallback((n: number) => adminFormatCurrency(locale, n), [locale]);
+
   return (
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -169,7 +183,7 @@ export function Reports() {
           <StatCard
             icon="💰"
             label={t("reports.revenue")}
-            value={`$${k.revenue.toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
+            value={formatMoney(k.revenue)}
             color="success"
           />
           <StatCard
@@ -200,8 +214,8 @@ export function Reports() {
                   <Tooltip
                     contentStyle={{ background: "#1A1C28", border: "1px solid #2A2D3A", borderRadius: "8px" }}
                     labelStyle={{ color: "#E8E9ED" }}
-                    formatter={(value: number) => [value, "Users"]}
-                    labelFormatter={(label) => `Date: ${label}`}
+                    formatter={(value: number) => [value, t("reports.chartTooltipUsers")]}
+                    labelFormatter={(label) => t("reports.chartDateLabel", { date: label })}
                   />
                   <Line
                     type="monotone"
@@ -209,7 +223,7 @@ export function Reports() {
                     stroke="#6C5CE7"
                     strokeWidth={2}
                     dot={{ fill: "#6C5CE7", r: 3 }}
-                    name="Users"
+                    name={t("reports.chartTooltipUsers")}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -220,12 +234,12 @@ export function Reports() {
         <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
           <h3 className="text-base font-semibold text-mordobo-text mb-4">{t("reports.jobsPerCategory")}</h3>
           <div className="h-[280px] w-full">
-            {jobsByCategory.length === 0 ? (
+            {jobsByCategoryChart.length === 0 ? (
               <p className="text-sm text-mordobo-textSecondary flex items-center h-full">{t("reports.noDataForPeriod")}</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={jobsByCategory}
+                  data={jobsByCategoryChart}
                   margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
                   layout="vertical"
                 >
@@ -234,14 +248,14 @@ export function Reports() {
                   <YAxis
                     type="category"
                     dataKey="categoryName"
-                    width={100}
+                    width={148}
                     tick={{ fill: "#8B8FA3", fontSize: 11 }}
                   />
                   <Tooltip
                     contentStyle={{ background: "#1A1C28", border: "1px solid #2A2D3A", borderRadius: "8px" }}
-                    formatter={(value: number) => [value, "Jobs"]}
+                    formatter={(value: number) => [value, t("reports.chartTooltipJobs")]}
                   />
-                  <Bar dataKey="count" fill="#6C5CE7" radius={[0, 4, 4, 0]} name="Jobs" />
+                  <Bar dataKey="count" fill="#6C5CE7" radius={[0, 4, 4, 0]} name={t("reports.chartTooltipJobs")} />
                 </BarChart>
               </ResponsiveContainer>
             )}
@@ -269,8 +283,8 @@ export function Reports() {
                 />
                 <Tooltip
                   contentStyle={{ background: "#1A1C28", border: "1px solid #2A2D3A", borderRadius: "8px" }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, "Revenue"]}
-                  labelFormatter={(label) => `Date: ${label}`}
+                  formatter={(value: number) => [formatMoney(value), t("reports.chartTooltipRevenue")]}
+                  labelFormatter={(label) => t("reports.chartDateLabel", { date: label })}
                 />
                 <Area
                   type="monotone"
@@ -279,7 +293,7 @@ export function Reports() {
                   fill="#6C5CE7"
                   fillOpacity={0.3}
                   strokeWidth={2}
-                  name="Revenue"
+                  name={t("reports.chartTooltipRevenue")}
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -311,7 +325,7 @@ export function Reports() {
                     <td className="py-3 pr-4 text-mordobo-textSecondary">{p.email}</td>
                     <td className="py-3 pr-4 text-right text-mordobo-text">{p.orderCount}</td>
                     <td className="py-3 text-right font-medium text-mordobo-success">
-                      ${p.earnings.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      {formatMoney(p.earnings)}
                     </td>
                   </tr>
                 ))}

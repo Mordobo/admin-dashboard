@@ -16,7 +16,7 @@ import type {
   TransactionStatus,
   TransactionsListParams,
 } from "@/types";
-
+import { adminFormatCurrency, adminFormatDateTime } from "@/utils/localeFormat";
 
 function statusBadgeColor(s: TransactionStatus): "success" | "warning" | "danger" | "info" | "accent" {
   switch (s) {
@@ -28,35 +28,29 @@ function statusBadgeColor(s: TransactionStatus): "success" | "warning" | "danger
       return "info";
     case "failed":
       return "danger";
+    case "cancelled":
+      return "danger";
     default:
       return "accent";
   }
 }
 
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-function formatMoney(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(n);
+function transactionStatusLabel(t: (key: string) => string, s: TransactionStatus): string {
+  const keys: Record<TransactionStatus, string> = {
+    completed: "transactions.statusCompleted",
+    pending: "transactions.statusPending",
+    refunded: "transactions.statusRefunded",
+    failed: "transactions.statusFailed",
+    cancelled: "transactions.statusCancelled",
+  };
+  return t(keys[s]);
 }
 
 export function Transactions() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
+  const formatDate = useCallback((iso: string) => adminFormatDateTime(locale, iso), [locale]);
+  const formatMoney = useCallback((n: number) => adminFormatCurrency(locale, n), [locale]);
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState<TransactionsListParams>({
     page: 1,
@@ -143,7 +137,9 @@ export function Transactions() {
     }
   }, [filters]);
 
-  const selectedForRefund = refundId ? transactions.find((t) => t.id === refundId) ?? (detail && detail.id === refundId ? detail : null) : null;
+  const selectedForRefund = refundId
+    ? transactions.find((tx) => tx.id === refundId) ?? (detail && detail.id === refundId ? detail : null)
+    : null;
 
   return (
     <div className="space-y-8">
@@ -224,6 +220,7 @@ export function Transactions() {
             <option value="completed">{t("transactions.statusCompleted")}</option>
             <option value="pending">{t("transactions.statusPending")}</option>
             <option value="refunded">{t("transactions.statusRefunded")}</option>
+            <option value="cancelled">{t("transactions.statusCancelled")}</option>
             <option value="failed">{t("transactions.statusFailed")}</option>
           </select>
           <input
@@ -308,7 +305,9 @@ export function Transactions() {
                         {formatMoney(tx.platform_fee)}
                       </td>
                       <td className="py-3 pr-4">
-                        <Badge color={statusBadgeColor(tx.status)}>{tx.status}</Badge>
+                        <Badge color={statusBadgeColor(tx.status)}>
+                          {transactionStatusLabel(t, tx.status)}
+                        </Badge>
                       </td>
                       <td className="py-3">
                         <div className="flex flex-wrap gap-1">
@@ -319,7 +318,7 @@ export function Transactions() {
                           >
                             {t("transactions.view")}
                           </button>
-                          {tx.status === "completed" && (
+                          {(tx.status === "completed" || tx.status === "cancelled") && (
                             <button
                               type="button"
                               onClick={() => {
@@ -411,25 +410,25 @@ export function Transactions() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
-                        ID
+                        {t("transactions.detailIdLabel")}
                       </div>
                       <div className="font-mono text-mordobo-text break-all">{detail.id}</div>
                     </div>
                     <div>
                       <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
-                        Job reference
+                        {t("transactions.detailJobReference")}
                       </div>
                       <div className="font-mono text-mordobo-text">{detail.job_reference ?? detail.order_id}</div>
                     </div>
                     <div>
                       <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
-                        Date
+                        {t("transactions.detailDate")}
                       </div>
                       <div className="text-mordobo-text">{formatDate(detail.date)}</div>
                     </div>
                     <div>
                       <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
-                        Payment method
+                        {t("transactions.detailPaymentMethod")}
                       </div>
                       <div className="text-mordobo-text capitalize">
                         {detail.payment_method ?? "—"}
@@ -437,7 +436,7 @@ export function Transactions() {
                     </div>
                     <div>
                       <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
-                        Client
+                        {t("transactions.detailClient")}
                       </div>
                       <div className="text-mordobo-text">
                         {detail.client_name ?? detail.client_email ?? detail.client_id}
@@ -445,7 +444,7 @@ export function Transactions() {
                     </div>
                     <div>
                       <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
-                        Provider
+                        {t("transactions.detailProvider")}
                       </div>
                       <div className="text-mordobo-text">
                         {detail.provider_name ?? detail.provider_email ?? detail.provider_id}
@@ -453,20 +452,22 @@ export function Transactions() {
                     </div>
                     <div>
                       <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
-                        Service
+                        {t("transactions.detailService")}
                       </div>
                       <div className="text-mordobo-text">{detail.service_name ?? "—"}</div>
                     </div>
                     <div>
                       <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
-                        Status
+                        {t("transactions.detailStatus")}
                       </div>
-                      <Badge color={statusBadgeColor(detail.status)}>{detail.status}</Badge>
+                      <Badge color={statusBadgeColor(detail.status)}>
+                        {transactionStatusLabel(t, detail.status)}
+                      </Badge>
                     </div>
                   </div>
                   <div>
                     <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-2">
-                      Payment breakdown
+                      {t("transactions.detailPaymentBreakdown")}
                     </div>
                     <div className="bg-mordobo-surface border border-mordobo-border rounded-xl p-4 space-y-2">
                       {detail.payment_breakdown?.line_items?.map((item, i) => (
@@ -480,12 +481,12 @@ export function Transactions() {
                       ))}
                       {(!detail.payment_breakdown?.line_items?.length) && (
                         <div className="flex justify-between text-sm text-mordobo-text">
-                          <span>Amount</span>
+                          <span>{t("transactions.detailLineAmount")}</span>
                           <span>{formatMoney(detail.amount)}</span>
                         </div>
                       )}
                       <div className="flex justify-between text-sm text-mordobo-textSecondary pt-2 border-t border-mordobo-border">
-                        <span>Platform fee</span>
+                        <span>{t("transactions.detailPlatformFeeLine")}</span>
                         <span>{formatMoney(detail.platform_fee)}</span>
                       </div>
                     </div>
@@ -493,11 +494,12 @@ export function Transactions() {
                   {detail.refund_amount != null && detail.refund_amount > 0 && (
                     <div className="text-sm">
                       <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
-                        Refund
+                        {t("transactions.detailRefundSection")}
                       </div>
                       <div className="text-mordobo-text">
                         {formatMoney(detail.refund_amount)}
-                        {detail.refunded_at && ` on ${formatDate(detail.refunded_at)}`}
+                        {detail.refunded_at &&
+                          ` ${t("transactions.detailRefundedOn", { date: formatDate(detail.refunded_at) })}`}
                       </div>
                       {detail.refund_reason && (
                         <div className="text-mordobo-textSecondary mt-1">{detail.refund_reason}</div>
@@ -505,7 +507,7 @@ export function Transactions() {
                     </div>
                   )}
                   <div className="flex flex-wrap gap-2 pt-2">
-                    {detail.status === "completed" && (
+                    {(detail.status === "completed" || detail.status === "cancelled") && (
                       <button
                         type="button"
                         onClick={() => {
@@ -515,7 +517,7 @@ export function Transactions() {
                         }}
                         className="rounded-lg bg-mordobo-warningDim text-mordobo-warning border border-mordobo-warning/30 px-4 py-2 text-sm font-medium hover:opacity-90"
                       >
-                        Issue refund
+                        {t("transactions.issueRefundCta")}
                       </button>
                     )}
                     <button
@@ -523,7 +525,7 @@ export function Transactions() {
                       onClick={() => handleFlag(detail.id, !detail.flag_for_review)}
                       className="rounded-lg border border-mordobo-border bg-mordobo-card px-4 py-2 text-sm font-medium text-mordobo-text hover:bg-mordobo-surfaceHover"
                     >
-                      {detail.flag_for_review ? "Unflag for review" : "Flag for review"}
+                      {detail.flag_for_review ? t("transactions.unflagForReview") : t("transactions.flagForReview")}
                     </button>
                   </div>
                 </div>
@@ -545,22 +547,21 @@ export function Transactions() {
             className="bg-mordobo-card border border-mordobo-border rounded-[14px] max-w-md w-full shadow-xl p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold text-mordobo-text mb-4">Issue refund</h3>
+            <h3 className="text-lg font-bold text-mordobo-text mb-4">{t("transactions.refundModalTitle")}</h3>
             <p className="text-sm text-mordobo-textSecondary mb-4">
-              Transaction amount: {formatMoney(selectedForRefund.amount)}.
-              Leave amount empty for full refund.
+              {t("transactions.refundModalBody", { amount: formatMoney(selectedForRefund.amount) })}
             </p>
             <input
               type="number"
               step="0.01"
               min="0"
-              placeholder="Refund amount (optional)"
+              placeholder={t("transactions.refundAmountPlaceholder")}
               value={refundAmount}
               onChange={(e) => setRefundAmount(e.target.value)}
               className="w-full rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none mb-4"
             />
             <textarea
-              placeholder="Reason for refund (required)"
+              placeholder={t("transactions.refundReasonPlaceholder")}
               value={refundReason}
               onChange={(e) => setRefundReason(e.target.value)}
               rows={3}
@@ -572,7 +573,7 @@ export function Transactions() {
                 onClick={() => setRefundId(null)}
                 className="rounded-xl border border-mordobo-border bg-mordobo-card px-4 py-2 text-sm font-medium text-mordobo-text hover:bg-mordobo-surfaceHover"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 type="button"
@@ -580,7 +581,7 @@ export function Transactions() {
                 disabled={!refundReason.trim() || refundSubmitting}
                 className="rounded-xl bg-mordobo-warning px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
               >
-                {refundSubmitting ? "Processing…" : "Confirm refund"}
+                {refundSubmitting ? t("transactions.refundProcessing") : t("transactions.refundConfirm")}
               </button>
             </div>
           </div>
