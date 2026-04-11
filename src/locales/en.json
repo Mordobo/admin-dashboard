@@ -35,7 +35,26 @@
     "viewAll": "View all →",
     "loading": "Loading…",
     "noRecentRequests": "No recent requests.",
-    "noRecentComplaints": "No recent complaints or suggestions."
+    "noRecentComplaints": "No recent complaints or suggestions.",
+    "onboardingStatus": {
+      "pending": "Pending",
+      "in_review": "In review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "complaintPriority": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "userRole": {
+      "client": "Client",
+      "provider": "Provider",
+      "admin": "Admin",
+      "moderator": "Moderator",
+      "super_admin": "Super Admin"
+    }
   },
   "common": {
     "save": "Save",
@@ -54,6 +73,34 @@
     "description": "Description",
     "status": "Status",
     "actions": "Actions"
+  },
+  "catalog": {
+    "names": {
+      "home_and_repairs": "Home & Repairs",
+      "cleaning": "Cleaning",
+      "beauty_and_personal_care": "Beauty & Personal Care",
+      "vehicles": "Vehicles",
+      "technology_and_tech_support": "Technology & Tech Support",
+      "moving_and_transportation": "Moving & Transportation",
+      "gardening_and_outdoors": "Gardening & Outdoors",
+      "pets": "Pets",
+      "events": "Events",
+      "health_and_wellness": "Health & Wellness",
+      "education_and_classes": "Education & Classes",
+      "business_and_professional_services": "Business & Professional Services",
+      "specialized_installations": "Specialized Installations",
+      "domestic_services": "Domestic Services",
+      "other_services": "Other Services",
+      "plumbing": "Plumbing",
+      "electrical": "Electrical",
+      "carpentry": "Carpentry",
+      "masonry_light_construction": "Masonry / Light construction",
+      "painting": "Painting",
+      "locksmith": "Locksmith",
+      "door_and_window_installation": "Door and window installation",
+      "roof_repair": "Roof repair",
+      "leak_sealing": "Leak sealing"
+    }
   },
   "servicesCategories": {
     "title": "Services & Categories",
@@ -190,7 +237,11 @@
     "jobs": "Jobs",
     "orders": "Orders",
     "earnings": "Earnings",
-    "date": "Date"
+    "date": "Date",
+    "chartTooltipUsers": "Users",
+    "chartTooltipJobs": "Jobs",
+    "chartTooltipRevenue": "Revenue",
+    "chartDateLabel": "Date: {{date}}"
   },
   "onboarding": {
     "backToList": "← Back to list",
@@ -447,7 +498,16 @@
       "pending": "Onboarding in progress",
       "pending_verification": "Pending verification",
       "rejected": "Rejected"
-    }
+    },
+    "jobOrderStatus": {
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "pending": "Pending",
+      "in_progress": "In progress",
+      "failed": "Failed"
+    },
+    "verifiedBadgeTitle": "Verified",
+    "featuredBadgeTitle": "Featured"
   },
   "transactions": {
     "title": "Transactions",
@@ -487,7 +547,50 @@
     "statusCompleted": "Completed",
     "statusPending": "Pending",
     "statusRefunded": "Refunded",
-    "statusFailed": "Failed"
+    "statusFailed": "Failed",
+    "statusCancelled": "Cancelled",
+    "detailIdLabel": "ID",
+    "detailJobReference": "Job reference",
+    "detailDate": "Date",
+    "detailPaymentMethod": "Payment method",
+    "detailClient": "Client",
+    "detailProvider": "Provider",
+    "detailService": "Service",
+    "detailStatus": "Status",
+    "detailPaymentBreakdown": "Payment breakdown",
+    "detailLineAmount": "Amount",
+    "detailPlatformFeeLine": "Platform fee",
+    "detailRefundSection": "Refund",
+    "detailRefundedOn": "on {{date}}",
+    "issueRefundCta": "Issue refund",
+    "flagForReview": "Flag for review",
+    "unflagForReview": "Unflag for review",
+    "refundModalTitle": "Issue refund",
+    "refundModalBody": "Transaction amount: {{amount}}. Leave amount empty for a full refund.",
+    "refundAmountPlaceholder": "Refund amount (optional)",
+    "refundReasonPlaceholder": "Reason for refund (required)",
+    "refundConfirm": "Confirm refund",
+    "refundProcessing": "Processing…"
+  },
+  "contentLegal": {
+    "loading": "Loading document…",
+    "title": "Legal documents",
+    "documentType": "Document type",
+    "contentEnglish": "Content (English)",
+    "contentSpanish": "Content (Spanish)",
+    "placeholderEn": "HTML content in English",
+    "placeholderEs": "HTML content in Spanish",
+    "save": "Save (creates new version)",
+    "saving": "Saving…",
+    "lastUpdated": "Last updated: {{datetime}}",
+    "saveFailed": "Failed to save",
+    "versionHistory": "Version history",
+    "savedAtColumn": "Saved at",
+    "noVersions": "No versions yet. Save the document to create the first version.",
+    "docTerms": "Terms of Service",
+    "docPrivacy": "Privacy Policy",
+    "docProvider": "Provider Agreement",
+    "docCookies": "Cookie Policy"
   },
   "settings": {
     "title": "System Settings",
@@ -508,6 +611,11 @@
     "user": "User",
     "lastLogin": "Last login",
     "deactivate": "Deactivate",
+    "adminStatus": {
+      "active": "Active",
+      "invited": "Invited",
+      "inactive": "Inactive"
+    },
     "platform": {
       "title": "Platform configuration",
       "loading": "Loading platform config…",

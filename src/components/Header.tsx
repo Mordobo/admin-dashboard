@@ -20,7 +20,9 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { logout } = useAuth();
   const [notificationsCount] = useState(0);
 
-  const currentLngIsSpanish = isSpanish(i18n.language);
+  const currentLngIsSpanish = isSpanish(i18n.resolvedLanguage ?? i18n.language);
+  /** Button shows the language you switch *to* (avoids inverted UX vs. “current language” label). */
+  const targetLanguageCode = currentLngIsSpanish ? "EN" : "ES";
   const toggleLanguage = () => i18n.changeLanguage(currentLngIsSpanish ? "en" : "es");
 
   const current = NAV_ITEMS.find((n) => n.path === location.pathname || (n.path !== "/" && location.pathname.startsWith(n.path)));
@@ -57,7 +59,7 @@ export function Header({ onMenuClick }: HeaderProps) {
             title={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
             aria-label={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
           >
-            {currentLngIsSpanish ? "ES" : "EN"}
+            {targetLanguageCode}
           </button>
           <button
             type="button"

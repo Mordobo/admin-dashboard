@@ -10,6 +10,7 @@ import {
 } from "@/services/settingsService";
 import type { AdminUserSettings, Role } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
+import { adminFormatDateTime } from "@/utils/localeFormat";
 
 const ROLES: Role[] = ["super_admin", "admin", "moderator"];
 function getRoleLabelKey(r: Role): string {
@@ -22,7 +23,8 @@ const STATUS_COLORS: Record<string, "success" | "warning" | "danger"> = {
 };
 
 export function AdminUsersSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const { auth } = useAuth();
   const isSuperAdmin = auth.role === "super_admin";
   const queryClient = useQueryClient();
@@ -231,10 +233,12 @@ export function AdminUsersSection() {
                     )}
                   </td>
                   <td className="py-3.5 px-4">
-                    <Badge color={STATUS_COLORS[user.status] ?? "info"}>{user.status}</Badge>
+                    <Badge color={STATUS_COLORS[user.status] ?? "info"}>
+                      {t(`settings.adminStatus.${user.status}`, { defaultValue: user.status })}
+                    </Badge>
                   </td>
                   <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary">
-                    {user.last_login_at ? new Date(user.last_login_at).toLocaleString() : "—"}
+                    {user.last_login_at ? adminFormatDateTime(locale, user.last_login_at) : "—"}
                   </td>
                   {isSuperAdmin && (
                     <td className="py-3.5 px-4">
