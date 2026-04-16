@@ -27,6 +27,7 @@ export function PlatformConfigSection() {
   const [form, setForm] = useState<PlatformConfigType>(defaultConfig);
   const [citiesText, setCitiesText] = useState("");
   const [languagesText, setLanguagesText] = useState("");
+  const [showSavedPopup, setShowSavedPopup] = useState(false);
 
   useEffect(() => {
     if (!config) return;
@@ -39,8 +40,15 @@ export function PlatformConfigSection() {
     mutationFn: updatePlatformConfig,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settings-platform"] });
+      setShowSavedPopup(true);
     },
   });
+
+  useEffect(() => {
+    if (!showSavedPopup) return;
+    const timeout = window.setTimeout(() => setShowSavedPopup(false), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [showSavedPopup]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,6 +92,16 @@ export function PlatformConfigSection() {
 
   return (
     <div className="space-y-6">
+      {showSavedPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-sm bg-mordobo-card border border-mordobo-border rounded-2xl p-6 text-center">
+            <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-mordobo-successDim text-mordobo-success flex items-center justify-center text-xl">
+              ✓
+            </div>
+            <p className="text-mordobo-text font-semibold m-0">{t("settings.platform.saveSuccess")}</p>
+          </div>
+        </div>
+      )}
       <h2 className="text-lg font-bold text-mordobo-text m-0">{t("settings.platform.title")}</h2>
       <form onSubmit={handleSubmit} className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

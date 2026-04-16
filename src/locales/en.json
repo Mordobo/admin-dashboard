@@ -634,7 +634,8 @@
       "off": "Off",
       "saveChanges": "Save changes",
       "saving": "Saving…",
-      "saveFailed": "Failed to save"
+      "saveFailed": "Failed to save",
+      "saveSuccess": "Changes were saved successfully"
     },
     "audit": {
       "title": "Audit log",
