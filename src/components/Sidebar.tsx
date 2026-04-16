@@ -4,6 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { NAV_ITEMS } from "@/utils/constants";
 import { useState } from "react";
 
+const APP_VERSION = "3.0.8";
+
 function getInitials(name: string): string {
   return name
     .split(/\s+/)
@@ -61,6 +63,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
             <div className="min-w-0">
               <div className="text-base font-bold text-mordobo-text tracking-tight">Mordobo</div>
               <div className="text-[10px] text-mordobo-textMuted uppercase tracking-widest">{t("nav.backoffice")}</div>
+              <div className="text-[10px] text-mordobo-textMuted tracking-widest">v{APP_VERSION}</div>
             </div>
           )}
         </div>
