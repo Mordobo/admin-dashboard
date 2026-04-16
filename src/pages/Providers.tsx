@@ -15,6 +15,7 @@ import type { ProviderListItem, ProviderDetail, ProviderListParams } from "@/typ
 import type { ServiceCatalogCategory } from "@/types";
 import { Badge } from "@/components/Badge";
 import { StatCard } from "@/components/StatCard";
+import { APP_VERSION } from "@/utils/appVersion";
 import {
   buildCategoryLookup,
   catalogItemDisplayName,
@@ -761,7 +762,10 @@ function ProviderDetailPanel({
             />
           )}
           <div>
-            <h3 className="text-lg font-semibold text-mordobo-text">{name}</h3>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-lg font-semibold text-mordobo-text">{name}</h3>
+              <span className="text-[11px] text-mordobo-textMuted tracking-widest">v{APP_VERSION}</span>
+            </div>
             <p className="text-sm text-mordobo-textSecondary">{profile.email}</p>
             <p className="text-sm text-mordobo-textSecondary">{profile.phone_number ?? "—"}</p>
             <div className="flex flex-wrap gap-2 mt-2">
