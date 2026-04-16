@@ -15,6 +15,7 @@ import {
   approveOnboardingApplication,
   rejectOnboardingApplication,
 } from "@/services/onboardingService";
+import { translateFreeformCatalogName } from "@/utils/adminLocale";
 import type { OnboardingDocumentItem } from "@/types";
 
 const CHECKLIST_KEYS: string[] = [
@@ -63,6 +64,11 @@ function onboardingStatusText(t: (key: string) => string, status: string): strin
 
 export function Onboarding() {
   const { t, i18n } = useTranslation();
+  const serviceLabel = useCallback(
+    (raw: string | null | undefined) => translateFreeformCatalogName(t, raw),
+    [t]
+  );
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -229,7 +235,7 @@ export function Onboarding() {
             <div className="grid grid-cols-2 gap-5 mb-7">
               {[
                 [t("onboarding.fullName"), detail.name],
-                [t("onboarding.serviceCategory"), detail.service],
+                [t("onboarding.serviceCategory"), serviceLabel(detail.service)],
                 [t("onboarding.location"), detail.location],
                 [t("onboarding.applicationDate"), detail.date || detail.applicationDate],
               ].map(([label, val]) => (
@@ -539,7 +545,7 @@ export function Onboarding() {
                       {req.name}
                     </td>
                     <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary">
-                      {req.service}
+                      {serviceLabel(req.service)}
                     </td>
                     <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary">
                       {req.location}
