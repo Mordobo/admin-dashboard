@@ -634,7 +634,8 @@
       "off": "Desactivado",
       "saveChanges": "Guardar cambios",
       "saving": "Guardando…",
-      "saveFailed": "Error al guardar"
+      "saveFailed": "Error al guardar",
+      "saveSuccess": "Los cambios se guardaron correctamente"
     },
     "audit": {
       "title": "Registro de auditoría",
