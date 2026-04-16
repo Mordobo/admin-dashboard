@@ -9,9 +9,8 @@ interface HeaderProps {
   onMenuClick?: () => void;
 }
 
-/** Normalized check: i18n can return "es", "es-ES", etc. */
 function isSpanish(lng: string | undefined): boolean {
-  return (lng ?? "").startsWith("es");
+  return (lng ?? "").toLowerCase().startsWith("es");
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
@@ -21,9 +20,10 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [notificationsCount] = useState(0);
 
   const currentLngIsSpanish = isSpanish(i18n.resolvedLanguage ?? i18n.language);
-  /** Button shows the language you switch *to* (avoids inverted UX vs. “current language” label). */
-  const targetLanguageCode = currentLngIsSpanish ? "EN" : "ES";
-  const toggleLanguage = () => i18n.changeLanguage(currentLngIsSpanish ? "en" : "es");
+  const currentLanguageCode = currentLngIsSpanish ? "ES" : "EN";
+  const handleLanguageSelect = (lng: "en" | "es") => {
+    void i18n.changeLanguage(lng);
+  };
 
   const current = NAV_ITEMS.find((n) => n.path === location.pathname || (n.path !== "/" && location.pathname.startsWith(n.path)));
   const title = current ? `${current.icon} ${t(`nav.${current.id}`)}` : `Mordobo ${t("nav.backoffice")}`;
@@ -52,15 +52,34 @@ export function Header({ onMenuClick }: HeaderProps) {
           <GlobalSearch />
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            className="text-xs font-medium text-mordobo-textMuted hover:text-mordobo-text px-2 py-1 rounded border border-mordobo-border hover:border-mordobo-accent/50"
-            title={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
-            aria-label={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
-          >
-            {targetLanguageCode}
-          </button>
+          <div className="flex items-center rounded border border-mordobo-border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => handleLanguageSelect("en")}
+              className={`text-xs font-medium px-2 py-1 transition-colors ${
+                currentLanguageCode === "EN"
+                  ? "bg-mordobo-accent text-white"
+                  : "text-mordobo-textMuted hover:text-mordobo-text"
+              }`}
+              title={t("nav.switchToEn")}
+              aria-label={t("nav.switchToEn")}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLanguageSelect("es")}
+              className={`text-xs font-medium px-2 py-1 transition-colors ${
+                currentLanguageCode === "ES"
+                  ? "bg-mordobo-accent text-white"
+                  : "text-mordobo-textMuted hover:text-mordobo-text"
+              }`}
+              title={t("nav.switchToEs")}
+              aria-label={t("nav.switchToEs")}
+            >
+              ES
+            </button>
+          </div>
           <button
             type="button"
             onClick={logout}
