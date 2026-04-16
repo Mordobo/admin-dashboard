@@ -11,6 +11,7 @@ import {
 } from "@/services/usersService";
 import type { ClientListItem, ClientDetail, ClientListParams } from "@/types";
 import { Badge } from "@/components/Badge";
+import { APP_VERSION } from "@/utils/appVersion";
 
 function formatDate(iso: string, locale: string): string {
   try {
@@ -566,7 +567,10 @@ function UserDetailPanel({
             />
           )}
           <div>
-            <h3 className="text-lg font-semibold text-mordobo-text">{name}</h3>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-lg font-semibold text-mordobo-text">{name}</h3>
+              <span className="text-[11px] text-mordobo-textMuted tracking-widest">v{APP_VERSION}</span>
+            </div>
             <p className="text-sm text-mordobo-textSecondary">{profile.email}</p>
             <p className="text-sm text-mordobo-textSecondary">{profile.phone_number ?? "—"}</p>
             <p className="text-sm text-mordobo-textSecondary">

@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { NAV_ITEMS } from "@/utils/constants";
+import { APP_VERSION } from "@/utils/appVersion";
 import { useState } from "react";
 
 function getInitials(name: string): string {
@@ -61,6 +62,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
             <div className="min-w-0">
               <div className="text-base font-bold text-mordobo-text tracking-tight">Mordobo</div>
               <div className="text-[10px] text-mordobo-textMuted uppercase tracking-widest">{t("nav.backoffice")}</div>
+              <div className="text-[10px] text-mordobo-textMuted tracking-widest">v{APP_VERSION}</div>
             </div>
           )}
         </div>
