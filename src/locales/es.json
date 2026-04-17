@@ -270,6 +270,13 @@
     "untitledQuestion": "Pregunta sin título",
     "statusDraft": "Borrador",
     "statusPublished": "Publicado",
+    "faqAudience": "Audiencia",
+    "faqAudienceOptions": {
+      "client": "Solo app cliente",
+      "provider": "Solo app proveedor",
+      "all": "Ambas apps"
+    },
+    "faqAudienceQuestionHint": "El Centro de ayuda de cada app solo muestra preguntas para esa app o “Ambas apps”.",
     "faqQuestionCount_one": "{{count}} pregunta",
     "faqQuestionCount_other": "{{count}} preguntas",
     "addAnswer": "+ Añadir respuesta",

@@ -15,7 +15,13 @@ import {
   updateFaqAnswer,
   deleteFaqAnswer,
 } from "@/services/contentService";
-import type { ContentStatus } from "@/types";
+import type { ContentStatus, FaqAudience } from "@/types";
+
+const FAQ_AUDIENCES: FaqAudience[] = ["client", "provider", "all"];
+
+function normalizeFaqAudience(raw: string | null | undefined): FaqAudience {
+  return raw === "provider" || raw === "all" || raw === "client" ? raw : "client";
+}
 
 /** Prefer API error message (e.g. schema_not_migrated) over generic axios message. */
 function getApiErrorMessage(error: unknown): string {
@@ -45,6 +51,7 @@ export function FaqsSection() {
   const preferEs = (i18n.language ?? "").startsWith("es");
   const statusLabel = (s: ContentStatus) =>
     s === "draft" ? t("content.statusDraft") : t("content.statusPublished");
+  const audienceLabel = (a: FaqAudience) => t(`content.faqAudienceOptions.${a}`);
   const queryClient = useQueryClient();
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -52,17 +59,21 @@ export function FaqsSection() {
   const [newCategoryTitleEn, setNewCategoryTitleEn] = useState("");
   const [newCategoryTitleEs, setNewCategoryTitleEs] = useState("");
   const [newCategoryStatus, setNewCategoryStatus] = useState<ContentStatus>("draft");
+  const [newCategoryAudience, setNewCategoryAudience] = useState<FaqAudience>("client");
   const [editCategoryTitleEn, setEditCategoryTitleEn] = useState("");
   const [editCategoryTitleEs, setEditCategoryTitleEs] = useState("");
   const [editCategoryStatus, setEditCategoryStatus] = useState<ContentStatus>("draft");
+  const [editCategoryAudience, setEditCategoryAudience] = useState<FaqAudience>("client");
   const [addingQuestionCategoryId, setAddingQuestionCategoryId] = useState<string | null>(null);
   const [newQuestionEn, setNewQuestionEn] = useState("");
   const [newQuestionEs, setNewQuestionEs] = useState("");
   const [newQuestionStatus, setNewQuestionStatus] = useState<ContentStatus>("draft");
+  const [newQuestionAudience, setNewQuestionAudience] = useState<FaqAudience>("client");
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
   const [editQuestionEn, setEditQuestionEn] = useState("");
   const [editQuestionEs, setEditQuestionEs] = useState("");
   const [editQuestionStatus, setEditQuestionStatus] = useState<ContentStatus>("draft");
+  const [editQuestionAudience, setEditQuestionAudience] = useState<FaqAudience>("client");
   const [addingAnswerQuestionId, setAddingAnswerQuestionId] = useState<string | null>(null);
   const [newAnswerEn, setNewAnswerEn] = useState("");
   const [newAnswerEs, setNewAnswerEs] = useState("");
@@ -83,6 +94,7 @@ export function FaqsSection() {
         title_en: newCategoryTitleEn.trim() || undefined,
         title_es: newCategoryTitleEs.trim() || undefined,
         status: newCategoryStatus,
+        audience: newCategoryAudience,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-faqs"] });
@@ -90,6 +102,7 @@ export function FaqsSection() {
       setNewCategoryTitleEn("");
       setNewCategoryTitleEs("");
       setNewCategoryStatus("draft");
+      setNewCategoryAudience("client");
     },
   });
 
@@ -99,6 +112,7 @@ export function FaqsSection() {
         title_en: editCategoryTitleEn.trim() || undefined,
         title_es: editCategoryTitleEs.trim() || undefined,
         status: editCategoryStatus,
+        audience: editCategoryAudience,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-faqs"] });
@@ -117,6 +131,7 @@ export function FaqsSection() {
         question_en: newQuestionEn.trim() || undefined,
         question_es: newQuestionEs.trim() || undefined,
         status: newQuestionStatus,
+        audience: newQuestionAudience,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-faqs"] });
@@ -124,6 +139,7 @@ export function FaqsSection() {
       setNewQuestionEn("");
       setNewQuestionEs("");
       setNewQuestionStatus("draft");
+      setNewQuestionAudience("client");
     },
   });
 
@@ -133,6 +149,7 @@ export function FaqsSection() {
         question_en: editQuestionEn.trim() || undefined,
         question_es: editQuestionEs.trim() || undefined,
         status: editQuestionStatus,
+        audience: editQuestionAudience,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-faqs"] });
@@ -273,6 +290,22 @@ export function FaqsSection() {
                 ))}
               </select>
             </div>
+            <div>
+              <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+                {t("content.faqAudience")}
+              </label>
+              <select
+                value={newCategoryAudience}
+                onChange={(e) => setNewCategoryAudience(e.target.value as FaqAudience)}
+                className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
+              >
+                {FAQ_AUDIENCES.map((a) => (
+                  <option key={a} value={a}>
+                    {audienceLabel(a)}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           {createCategoryMutation.isError && (
             <p className="text-mordobo-danger text-sm mb-4">
@@ -321,6 +354,7 @@ export function FaqsSection() {
                   </div>
                   <div className="text-xs text-mordobo-textMuted">
                     {t("content.faqQuestionCount", { count: cat.questions?.length ?? 0 })}
+                    <span className="text-mordobo-textMuted"> · {audienceLabel(normalizeFaqAudience(cat.audience))}</span>
                     {(cat.status === "published" &&
                       (cat.questions ?? []).filter((q) => q.status === "published").length === 0 &&
                       (cat.questions?.length ?? 0) > 0) && (
@@ -364,6 +398,7 @@ export function FaqsSection() {
                         setEditCategoryTitleEn(cat.title_en ?? "");
                         setEditCategoryTitleEs(cat.title_es ?? "");
                         setEditCategoryStatus((cat.status as ContentStatus) ?? "draft");
+                        setEditCategoryAudience(normalizeFaqAudience(cat.audience));
                       }}
                       className="text-mordobo-accentLight text-sm hover:underline"
                     >
@@ -423,6 +458,22 @@ export function FaqsSection() {
                       ))}
                     </select>
                   </div>
+                  <div>
+                    <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+                      {t("content.faqAudience")}
+                    </label>
+                    <select
+                      value={editCategoryAudience}
+                      onChange={(e) => setEditCategoryAudience(e.target.value as FaqAudience)}
+                      className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
+                    >
+                      {FAQ_AUDIENCES.map((a) => (
+                        <option key={a} value={a}>
+                          {audienceLabel(a)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
             )}
@@ -436,6 +487,9 @@ export function FaqsSection() {
                       setAddingQuestionCategoryId(cat.id);
                       setNewQuestionEn("");
                       setNewQuestionEs("");
+                      setNewQuestionStatus("draft");
+                      // Match category scope so provider FAQs default to provider (GET /api/content/faqs?audience=provider).
+                      setNewQuestionAudience(normalizeFaqAudience(cat.audience));
                     }}
                     className="py-2 px-4 bg-mordobo-accentDim border border-mordobo-accent/25 text-mordobo-accentLight rounded-xl text-sm font-medium hover:opacity-90"
                   >
@@ -486,7 +540,26 @@ export function FaqsSection() {
                           ))}
                         </select>
                       </div>
+                      <div>
+                        <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+                          {t("content.faqAudience")}
+                        </label>
+                        <select
+                          value={newQuestionAudience}
+                          onChange={(e) => setNewQuestionAudience(e.target.value as FaqAudience)}
+                          className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
+                        >
+                          {FAQ_AUDIENCES.map((a) => (
+                            <option key={a} value={a}>
+                              {audienceLabel(a)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     </div>
+                    <p className="text-mordobo-textMuted text-xs m-0 mb-4">
+                      {t("content.faqAudienceQuestionHint")}
+                    </p>
                     <div className="flex gap-3">
                       <button
                         type="button"
@@ -541,6 +614,22 @@ export function FaqsSection() {
                             ))}
                           </select>
                         </div>
+                        <div>
+                          <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1">
+                            {t("content.faqAudience")}
+                          </label>
+                          <select
+                            value={editQuestionAudience}
+                            onChange={(e) => setEditQuestionAudience(e.target.value as FaqAudience)}
+                            className="w-full py-2 px-3 bg-mordobo-surface border border-mordobo-border rounded-lg text-sm"
+                          >
+                            {FAQ_AUDIENCES.map((a) => (
+                              <option key={a} value={a}>
+                                {audienceLabel(a)}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
                         <div className="flex gap-2">
                           <button
                             type="button"
@@ -576,11 +665,14 @@ export function FaqsSection() {
                                 t("content.untitledQuestion"),
                               )}
                             </p>
-                            <span className="mt-1 inline-block">
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
                               <Badge color={STATUS_COLORS[(q.status as ContentStatus) ?? "draft"]}>
                                 {statusLabel((q.status as ContentStatus) ?? "draft")}
                               </Badge>
-                            </span>
+                              <span className="text-xs text-mordobo-textMuted">
+                                {audienceLabel(normalizeFaqAudience(q.audience))}
+                              </span>
+                            </div>
                           </div>
                           <div className="flex gap-2 shrink-0">
                             <button
@@ -590,6 +682,7 @@ export function FaqsSection() {
                                 setEditQuestionEn(q.question_en ?? "");
                                 setEditQuestionEs(q.question_es ?? "");
                                 setEditQuestionStatus((q.status as ContentStatus) ?? "draft");
+                                setEditQuestionAudience(normalizeFaqAudience(q.audience));
                               }}
                               className="text-mordobo-accentLight text-xs hover:underline"
                             >

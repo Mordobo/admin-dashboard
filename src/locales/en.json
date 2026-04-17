@@ -270,6 +270,13 @@
     "untitledQuestion": "Untitled question",
     "statusDraft": "Draft",
     "statusPublished": "Published",
+    "faqAudience": "Audience",
+    "faqAudienceOptions": {
+      "client": "Client app only",
+      "provider": "Provider app only",
+      "all": "Both apps"
+    },
+    "faqAudienceQuestionHint": "Each app’s Help Center only shows questions marked for that app or “Both apps”.",
     "faqQuestionCount_one": "{{count}} question",
     "faqQuestionCount_other": "{{count}} questions",
     "addAnswer": "+ Add answer",
