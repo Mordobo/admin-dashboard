@@ -221,6 +221,9 @@ export interface AuditLogEntry {
 // --- Content Management (CMS) ---
 export type ContentStatus = "published" | "draft";
 
+/** FAQ visibility: which app(s) see the category or question in Help Center. */
+export type FaqAudience = "client" | "provider" | "all";
+
 export interface FaqAnswer {
   id: string;
   question_id: string;
@@ -239,6 +242,7 @@ export interface FaqQuestion {
   question_es?: string;
   status?: ContentStatus;
   order?: number;
+  audience?: FaqAudience;
   answers?: FaqAnswer[];
   created_at?: string;
   updated_at?: string;
@@ -246,10 +250,12 @@ export interface FaqQuestion {
 
 export interface FaqCategory {
   id: string;
+  slug?: string;
   title_en?: string;
   title_es?: string;
   status?: ContentStatus;
   order?: number;
+  audience?: FaqAudience;
   questions?: FaqQuestion[];
   created_at?: string;
   updated_at?: string;

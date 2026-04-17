@@ -3,6 +3,7 @@ import type {
   FaqCategory,
   FaqQuestion,
   FaqAnswer,
+  FaqAudience,
   LegalDocument,
   LegalDocumentVersion,
   LegalDocType,
@@ -34,6 +35,8 @@ export async function createFaqCategory(payload: {
   title_es?: string;
   status?: ContentStatus;
   order?: number;
+  audience?: FaqAudience;
+  slug?: string;
 }): Promise<FaqCategory> {
   const { data } = await api.post<FaqCategory | { category: FaqCategory }>(`${CONTENT_BASE}/faqs`, payload);
   if (data && "category" in data) return data.category;
@@ -42,7 +45,7 @@ export async function createFaqCategory(payload: {
 
 export async function updateFaqCategory(
   id: string,
-  payload: Partial<Pick<FaqCategory, "title_en" | "title_es" | "status" | "order">>
+  payload: Partial<Pick<FaqCategory, "title_en" | "title_es" | "status" | "order" | "audience" | "slug">>
 ): Promise<FaqCategory> {
   const { data } = await api.put<FaqCategory | { category: FaqCategory }>(`${CONTENT_BASE}/faqs/${id}`, payload);
   if (data && "category" in data) return data.category;
@@ -55,7 +58,7 @@ export async function deleteFaqCategory(id: string): Promise<void> {
 
 export async function createFaqQuestion(
   categoryId: string,
-  payload: Partial<Pick<FaqQuestion, "question_en" | "question_es" | "status" | "order">>
+  payload: Partial<Pick<FaqQuestion, "question_en" | "question_es" | "status" | "order" | "audience">>
 ): Promise<FaqQuestion> {
   const { data } = await api.post<FaqQuestion | { question: FaqQuestion }>(
     `${CONTENT_BASE}/faqs/${categoryId}/questions`,
@@ -68,7 +71,7 @@ export async function createFaqQuestion(
 export async function updateFaqQuestion(
   categoryId: string,
   questionId: string,
-  payload: Partial<Pick<FaqQuestion, "question_en" | "question_es" | "status" | "order">>
+  payload: Partial<Pick<FaqQuestion, "question_en" | "question_es" | "status" | "order" | "audience">>
 ): Promise<FaqQuestion> {
   const { data } = await api.put<FaqQuestion | { question: FaqQuestion }>(
     `${CONTENT_BASE}/faqs/${categoryId}/questions/${questionId}`,
