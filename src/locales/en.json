@@ -31,7 +31,26 @@
     "viewAll": "View all →",
     "loading": "Loading…",
     "noRecentRequests": "No recent requests.",
-    "noRecentComplaints": "No recent complaints or suggestions."
+    "noRecentComplaints": "No recent complaints or suggestions.",
+    "onboardingStatus": {
+      "pending": "Pending",
+      "in_review": "In review",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "complaintPriority": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "userRole": {
+      "client": "Client",
+      "provider": "Provider",
+      "admin": "Administrator",
+      "moderator": "Moderator",
+      "super_admin": "Super administrator"
+    }
   },
   "common": {
     "save": "Save",
@@ -176,7 +195,22 @@
     "review": "Review",
     "pageOf": "Page {{page}} of {{totalPages}} ({{total}} total)",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "filterAll": "All",
+    "filterPending": "Pending",
+    "filterInReview": "In review",
+    "filterApproved": "Approved",
+    "filterRejected": "Rejected",
+    "statusPending": "Pending",
+    "statusInReview": "In review",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "activityEvents": {
+      "notes_saved": "Notes saved",
+      "checklist_updated": "Review checklist updated",
+      "approved": "Application approved",
+      "rejected": "Application rejected"
+    }
   },
   "complaints": {
     "backToList": "← Back to list",
@@ -224,7 +258,30 @@
     "refundReason": "Reason (required)",
     "refundAmount": "Amount (optional, leave empty for full)",
     "noRelatedOrder": "No related order",
-    "noRelatedOrderMessage": "This complaint has no linked order. Refunds are only available when the ticket is linked to an order with a payment."
+    "noRelatedOrderMessage": "This complaint has no linked order. Refunds are only available when the ticket is linked to an order with a payment.",
+    "typeLabels": {
+      "complaint": "Complaint",
+      "claim": "Claim",
+      "suggestion": "Suggestion"
+    },
+    "priorityLabels": {
+      "critical": "Critical",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    },
+    "statusLabels": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "resolved": "Resolved",
+      "closed": "Closed",
+      "escalated": "Escalated"
+    },
+    "senderTypes": {
+      "admin": "Admin",
+      "client": "Client",
+      "provider": "Provider"
+    }
   },
   "users": {
     "title": "Users Management",

@@ -14,8 +14,25 @@ import {
   refundComplaint,
   updateComplaint,
 } from "@/services/complaintsService";
-import type { Complaint, ComplaintDetail, ComplaintMessage, ComplaintStatus } from "@/types";
+import type { ComplaintDetail, ComplaintMessage, ComplaintStatus } from "@/types";
 import type { TFunction } from "i18next";
+import { normalizeEnumKey } from "@/utils/adminLocale";
+
+function tComplaintType(t: TFunction, raw: string): string {
+  return t(`complaints.typeLabels.${normalizeEnumKey(raw)}`, { defaultValue: raw });
+}
+
+function tComplaintPriority(t: TFunction, raw: string): string {
+  return t(`complaints.priorityLabels.${normalizeEnumKey(raw)}`, { defaultValue: raw });
+}
+
+function tComplaintStatus(t: TFunction, raw: string): string {
+  return t(`complaints.statusLabels.${normalizeEnumKey(raw)}`, { defaultValue: raw });
+}
+
+function tMessageSender(t: TFunction, raw: string): string {
+  return t(`complaints.senderTypes.${normalizeEnumKey(raw)}`, { defaultValue: raw });
+}
 
 const STATUS_OPTIONS: ComplaintStatus[] = [
   "open",
@@ -318,7 +335,9 @@ export function Complaints() {
                 </tr>
               </thead>
               <tbody>
-                {list.map((c) => (
+                {list.map((c) => {
+                  const statusNorm = normalizeEnumKey(c.status);
+                  return (
                   <tr
                     key={c.id}
                     className="border-b border-mordobo-border cursor-pointer hover:bg-mordobo-surface/50"
@@ -337,12 +356,12 @@ export function Complaints() {
                               : "info"
                         }
                       >
-                        {c.type}
+                        {tComplaintType(t, c.type)}
                       </Badge>
                     </td>
                     <td className="py-3.5 px-4">
                       <div className="text-[13px] text-mordobo-text font-medium">{c.from}</div>
-                      <div className="text-[11px] text-mordobo-textMuted">{c.role}</div>
+                      <div className="text-[11px] text-mordobo-textMuted">{tMessageSender(t, c.role)}</div>
                     </td>
                     <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary max-w-[250px] truncate">
                       {c.subject}
@@ -359,22 +378,22 @@ export function Complaints() {
                                 : "accent"
                         }
                       >
-                        {c.priority}
+                        {tComplaintPriority(t, c.priority)}
                       </Badge>
                     </td>
                     <td className="py-3.5 px-4">
                       <Badge
                         color={
-                          c.status === "open"
+                          statusNorm === "open"
                             ? "warning"
-                            : c.status === "in_progress"
+                            : statusNorm === "in_progress"
                               ? "info"
-                              : c.status === "escalated"
+                              : statusNorm === "escalated"
                                 ? "danger"
                                 : "success"
                         }
                       >
-                        {c.status.replace("_", " ")}
+                        {tComplaintStatus(t, c.status)}
                       </Badge>
                     </td>
                     <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary">
@@ -390,7 +409,8 @@ export function Complaints() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             {pagination.totalPages > 1 && (
@@ -487,7 +507,7 @@ function DetailView({
                     : "info"
               }
             >
-              {detail.type}
+              {tComplaintType(t, detail.type)}
             </Badge>
             <Badge
               color={
@@ -500,15 +520,15 @@ function DetailView({
                       : "accent"
               }
             >
-              {detail.priority}
+              {tComplaintPriority(t, detail.priority)}
             </Badge>
           </div>
         </div>
         <div className="grid grid-cols-3 gap-4 mb-6">
           {[
-            [t("complaints.submittedBy"), `${detail.from} (${detail.role})`],
+            [t("complaints.submittedBy"), `${detail.from} (${tMessageSender(t, detail.role)})`],
             [t("complaints.date"), formatDate(detail.date ?? detail.createdAt)],
-            [t("complaints.status"), detail.status.replace("_", " ")],
+            [t("complaints.status"), tComplaintStatus(t, detail.status)],
           ].map(([label, val]) => (
             <div key={String(label)}>
               <div className="text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
@@ -548,7 +568,7 @@ function DetailView({
                   }`}
                 >
                   <div className="text-[11px] text-mordobo-textMuted mb-1 capitalize">
-                    {m.senderType} · {formatDate(m.createdAt)}
+                    {tMessageSender(t, m.senderType)} · {formatDate(m.createdAt)}
                   </div>
                   <div className="whitespace-pre-wrap">{m.messageText}</div>
                 </div>
@@ -584,7 +604,7 @@ function DetailView({
             <option value="">{t("complaints.changeStatus")}</option>
             {STATUS_OPTIONS.map((s) => (
               <option key={s} value={s}>
-                {s.replace("_", " ")}
+                {tComplaintStatus(t, s)}
               </option>
             ))}
           </select>

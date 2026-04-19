@@ -31,7 +31,26 @@
     "viewAll": "Ver todo →",
     "loading": "Cargando…",
     "noRecentRequests": "No hay solicitudes recientes.",
-    "noRecentComplaints": "No hay quejas o sugerencias recientes."
+    "noRecentComplaints": "No hay quejas o sugerencias recientes.",
+    "onboardingStatus": {
+      "pending": "Pendiente",
+      "in_review": "En revisión",
+      "approved": "Aprobado",
+      "rejected": "Rechazado"
+    },
+    "complaintPriority": {
+      "critical": "Crítica",
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja"
+    },
+    "userRole": {
+      "client": "Cliente",
+      "provider": "Proveedor",
+      "admin": "Administrador",
+      "moderator": "Moderador",
+      "super_admin": "Superadministrador"
+    }
   },
   "common": {
     "save": "Guardar",
@@ -176,7 +195,22 @@
     "review": "Revisar",
     "pageOf": "Pág. {{page}} de {{totalPages}} ({{total}} en total)",
     "previous": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "filterAll": "Todas",
+    "filterPending": "Pendiente",
+    "filterInReview": "En revisión",
+    "filterApproved": "Aprobadas",
+    "filterRejected": "Rechazadas",
+    "statusPending": "Pendiente",
+    "statusInReview": "En revisión",
+    "statusApproved": "Aprobada",
+    "statusRejected": "Rechazada",
+    "activityEvents": {
+      "notes_saved": "Notas guardadas",
+      "checklist_updated": "Lista de revisión actualizada",
+      "approved": "Solicitud aprobada",
+      "rejected": "Solicitud rechazada"
+    }
   },
   "complaints": {
     "backToList": "← Volver al listado",
@@ -224,7 +258,30 @@
     "refundReason": "Motivo (requerido)",
     "refundAmount": "Importe (opcional, vacío = total)",
     "noRelatedOrder": "Sin pedido relacionado",
-    "noRelatedOrderMessage": "Esta queja no tiene pedido vinculado. Los reembolsos solo están disponibles cuando el ticket está vinculado a un pedido con pago."
+    "noRelatedOrderMessage": "Esta queja no tiene pedido vinculado. Los reembolsos solo están disponibles cuando el ticket está vinculado a un pedido con pago.",
+    "typeLabels": {
+      "complaint": "Queja",
+      "claim": "Reclamación",
+      "suggestion": "Sugerencia"
+    },
+    "priorityLabels": {
+      "critical": "Crítica",
+      "high": "Alta",
+      "medium": "Media",
+      "low": "Baja"
+    },
+    "statusLabels": {
+      "open": "Abierto",
+      "in_progress": "En curso",
+      "resolved": "Resuelto",
+      "closed": "Cerrado",
+      "escalated": "Escalado"
+    },
+    "senderTypes": {
+      "admin": "Administración",
+      "client": "Cliente",
+      "provider": "Proveedor"
+    }
   },
   "users": {
     "title": "Gestión de usuarios",

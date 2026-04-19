@@ -15,6 +15,7 @@ import {
   approveOnboardingApplication,
   rejectOnboardingApplication,
 } from "@/services/onboardingService";
+import { normalizeEnumKey, translateFreeformCatalogName } from "@/utils/adminLocale";
 import type { OnboardingDocumentItem } from "@/types";
 
 const CHECKLIST_KEYS: string[] = [
@@ -39,8 +40,40 @@ const STATUS_COLORS: Record<string, "warning" | "info" | "success" | "danger"> =
   rejected: "danger",
 };
 
+const ONBOARDING_FILTERS = ["all", "pending", "in_review", "approved", "rejected"] as const;
+
+const FILTER_LABEL_KEY: Record<(typeof ONBOARDING_FILTERS)[number], string> = {
+  all: "onboarding.filterAll",
+  pending: "onboarding.filterPending",
+  in_review: "onboarding.filterInReview",
+  approved: "onboarding.filterApproved",
+  rejected: "onboarding.filterRejected",
+};
+
+const ONBOARDING_STATUS_LABEL_KEY: Record<string, string> = {
+  pending: "onboarding.statusPending",
+  in_review: "onboarding.statusInReview",
+  approved: "onboarding.statusApproved",
+  rejected: "onboarding.statusRejected",
+};
+
+function onboardingStatusText(t: (key: string) => string, status: string): string {
+  const key = ONBOARDING_STATUS_LABEL_KEY[status];
+  return key ? t(key) : status.replace(/_/g, " ");
+}
+
+function onboardingActivityEventLabel(t: (key: string) => string, eventType: string): string {
+  const i18nKey = `onboarding.activityEvents.${normalizeEnumKey(eventType)}`;
+  const translated = t(i18nKey);
+  return translated !== i18nKey ? translated : eventType.replace(/_/g, " ");
+}
+
 export function Onboarding() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const serviceLabel = useCallback(
+    (raw: string | null | undefined) => translateFreeformCatalogName(t, raw),
+    [t]
+  );
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -201,13 +234,13 @@ export function Onboarding() {
                 {t("onboarding.application")}: {detail.id}
               </h2>
               <Badge color={STATUS_COLORS[detail.status] ?? "info"}>
-                {detail.status.replace("_", " ")}
+                {onboardingStatusText(t, detail.status)}
               </Badge>
             </div>
             <div className="grid grid-cols-2 gap-5 mb-7">
               {[
                 [t("onboarding.fullName"), detail.name],
-                [t("onboarding.serviceCategory"), detail.service],
+                [t("onboarding.serviceCategory"), serviceLabel(detail.service)],
                 [t("onboarding.location"), detail.location],
                 [t("onboarding.applicationDate"), detail.date || detail.applicationDate],
               ].map(([label, val]) => (
@@ -332,10 +365,10 @@ export function Onboarding() {
                       className="text-[13px] text-mordobo-textSecondary border-l-2 border-mordobo-border pl-3 py-1"
                     >
                       <span className="font-medium text-mordobo-text">
-                        {entry.eventType.replace(/_/g, " ")}
+                        {onboardingActivityEventLabel(t, entry.eventType)}
                       </span>
                       <span className="block text-xs text-mordobo-textMuted">
-                        {new Date(entry.createdAt).toLocaleString()}
+                        {new Date(entry.createdAt).toLocaleString(i18n.language)}
                       </span>
                     </li>
                   ))}
@@ -431,7 +464,6 @@ export function Onboarding() {
     );
   }
 
-  const filters = ["all", "pending", "in_review", "approved", "rejected"] as const;
   const list = listData?.data ?? [];
   const pagination = listData?.pagination ?? {
     page: 1,
@@ -444,7 +476,7 @@ export function Onboarding() {
     <div>
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div className="flex gap-2 flex-wrap">
-          {filters.map((f) => (
+          {ONBOARDING_FILTERS.map((f) => (
             <button
               key={f}
               type="button"
@@ -458,7 +490,7 @@ export function Onboarding() {
                   : "bg-mordobo-surface text-mordobo-textSecondary border-mordobo-border"
               }`}
             >
-              {f.replace("_", " ")} ({counts[f] ?? 0})
+              {t(FILTER_LABEL_KEY[f])} ({counts[f] ?? 0})
             </button>
           ))}
         </div>
@@ -518,7 +550,7 @@ export function Onboarding() {
                       {req.name}
                     </td>
                     <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary">
-                      {req.service}
+                      {serviceLabel(req.service)}
                     </td>
                     <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary">
                       {req.location}
@@ -527,11 +559,11 @@ export function Onboarding() {
                       {req.documents} {t("onboarding.files")}
                     </td>
                     <td className="py-3.5 px-4 text-[13px] text-mordobo-textSecondary">
-                      {req.date ? new Date(req.date).toLocaleDateString() : "—"}
+                      {req.date ? new Date(req.date).toLocaleDateString(i18n.language) : "—"}
                     </td>
                     <td className="py-3.5 px-4">
                       <Badge color={STATUS_COLORS[req.status] ?? "info"}>
-                        {req.status.replace("_", " ")}
+                        {onboardingStatusText(t, req.status)}
                       </Badge>
                     </td>
                     <td className="py-3.5 px-4" onClick={(e) => e.stopPropagation()}>
