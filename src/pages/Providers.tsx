@@ -22,6 +22,7 @@ import {
   normalizeEnumKey,
   prefersSpanishLanguage,
   translateFreeformCatalogName,
+  translateJobOrderStatus,
 } from "@/utils/adminLocale";
 import { adminFormatCurrency, adminFormatDateTime } from "@/utils/localeFormat";
 
@@ -57,15 +58,6 @@ function isProviderBannedStatus(raw: string): boolean {
 function translateProviderStatus(t: (key: string, options?: { defaultValue?: string }) => string, raw: string): string {
   const n = normalizeEnumKey(raw);
   return t(`providers.statusLabels.${n}`, { defaultValue: raw });
-}
-
-function translateJobOrderStatus(
-  t: (key: string, options?: { defaultValue?: string }) => string,
-  raw: string | null | undefined
-): string {
-  if (!raw?.trim()) return "—";
-  const n = normalizeEnumKey(raw);
-  return t(`providers.jobOrderStatus.${n}`, { defaultValue: raw });
 }
 
 export function Providers() {

@@ -78,6 +78,7 @@
     "names": {
       "home_repairs": "Home & Repairs",
       "home_and_repairs": "Home & Repairs",
+      "plomeria": "Plumbing",
       "cleaning": "Cleaning",
       "beauty_personal_care": "Beauty & Personal Care",
       "beauty_and_personal_care": "Beauty & Personal Care",
@@ -377,6 +378,12 @@
     "profileComplete": "Profile complete",
     "activityLog": "Activity Log",
     "noActivityRecorded": "No activity recorded.",
+    "activityEvents": {
+      "notes_saved": "Notes saved",
+      "checklist_updated": "Checklist updated",
+      "approved": "Application approved",
+      "rejected": "Application rejected"
+    },
     "approveApplicationConfirm": "Approve application?",
     "approveApplicationMessage": "This will create a provider account and update the application status.",
     "approving": "Approving...",
@@ -536,7 +543,25 @@
     "statusBanned": "Banned",
     "statusDeleted": "Deleted",
     "statusPending": "Pending",
-    "accountDeletedHint": "This account is deleted. Actions are disabled until restored in the database."
+    "accountDeletedHint": "This account is deleted. Actions are disabled until restored in the database.",
+    "addressDefaultMark": "(default)",
+    "activityBy": "by",
+    "paymentMethodTypes": {
+      "card": "Card",
+      "credit_card": "Credit card",
+      "debit_card": "Debit card",
+      "apple_pay": "Apple Pay",
+      "google_pay": "Google Pay",
+      "cash": "Cash",
+      "bank_transfer": "Bank transfer",
+      "paypal": "PayPal"
+    },
+    "activityActions": {
+      "user_status_updated": "User status updated",
+      "user_notification_sent": "User notification sent",
+      "user_password_reset_triggered": "Password reset triggered",
+      "user_deleted": "User deleted (soft)"
+    }
   },
   "providers": {
     "title": "Providers Management",
@@ -614,6 +639,7 @@
       "cancelled": "Cancelled",
       "pending": "Pending",
       "in_progress": "In progress",
+      "pending_review": "Pending review",
       "failed": "Failed"
     },
     "verifiedBadgeTitle": "Verified",

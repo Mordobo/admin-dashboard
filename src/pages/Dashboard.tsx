@@ -5,7 +5,7 @@ import { StatCard } from "@/components/StatCard";
 import { Badge } from "@/components/Badge";
 import { fetchDashboardStats, listOnboardingRequests, listComplaints } from "@/services/adminService";
 import type { OnboardingRequest, Complaint } from "@/types";
-import { normalizeEnumKey } from "@/utils/adminLocale";
+import { normalizeEnumKey, translateDashboardUserRole, translateFreeformCatalogName } from "@/utils/adminLocale";
 
 function onboardingStatusLabel(
   t: (key: string) => string,
@@ -20,13 +20,6 @@ function complaintPriorityLabel(t: (key: string) => string, priority: string): s
   const k = `dashboard.complaintPriority.${normalizeEnumKey(priority)}`;
   const out = t(k);
   return out !== k ? out : priority;
-}
-
-function complaintRoleLabel(t: (key: string) => string, role: string): string {
-  const n = normalizeEnumKey(role);
-  const k = `dashboard.userRole.${n}`;
-  const out = t(k);
-  return out !== k ? out : role;
 }
 
 export function Dashboard() {
@@ -118,7 +111,10 @@ export function Dashboard() {
               >
                 <div>
                   <div className="text-sm font-medium text-mordobo-text">{req.name}</div>
-                  <div className="text-xs text-mordobo-textSecondary">{req.service} · {req.location}</div>
+                  <div className="text-xs text-mordobo-textSecondary">
+                    {translateFreeformCatalogName(t, req.service)}
+                    {req.location ? ` · ${translateFreeformCatalogName(t, req.location)}` : ""}
+                  </div>
                 </div>
                 <Badge
                   color={
@@ -157,7 +153,7 @@ export function Dashboard() {
                 <div>
                   <div className="text-sm font-medium text-mordobo-text">{c.subject}</div>
                   <div className="text-xs text-mordobo-textSecondary">
-                    {c.from} · {complaintRoleLabel(t, c.role)}
+                    {c.from} · {translateDashboardUserRole(t, c.role)}
                   </div>
                 </div>
                 <Badge
