@@ -9,18 +9,14 @@ interface HeaderProps {
   onMenuClick?: () => void;
 }
 
-function isSpanish(lng: string | undefined): boolean {
-  return (lng ?? "").toLowerCase().startsWith("es");
-}
-
 export function Header({ onMenuClick }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const { logout } = useAuth();
   const [notificationsCount] = useState(0);
 
-  const currentLngIsSpanish = isSpanish(i18n.resolvedLanguage ?? i18n.language);
-  const currentLanguageCode = currentLngIsSpanish ? "ES" : "EN";
+  const lng = (i18n.resolvedLanguage ?? i18n.language ?? "en").toLowerCase();
+  const esActive = lng.startsWith("es");
   const handleLanguageSelect = (lng: "en" | "es") => {
     void i18n.changeLanguage(lng);
   };
@@ -57,7 +53,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               type="button"
               onClick={() => handleLanguageSelect("en")}
               className={`text-xs font-medium px-2 py-1 transition-colors ${
-                currentLanguageCode === "EN"
+                !esActive
                   ? "bg-mordobo-accent text-white"
                   : "text-mordobo-textMuted hover:text-mordobo-text"
               }`}
@@ -70,7 +66,7 @@ export function Header({ onMenuClick }: HeaderProps) {
               type="button"
               onClick={() => handleLanguageSelect("es")}
               className={`text-xs font-medium px-2 py-1 transition-colors ${
-                currentLanguageCode === "ES"
+                esActive
                   ? "bg-mordobo-accent text-white"
                   : "text-mordobo-textMuted hover:text-mordobo-text"
               }`}
