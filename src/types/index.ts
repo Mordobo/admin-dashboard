@@ -28,6 +28,18 @@ export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
+  /** When true (backoffice admin), the UI must prompt for a new password before normal use. */
+  requires_password_change?: boolean;
+}
+
+/** After login with a temporary password; caller must complete password change then persist auth. */
+export interface LoginPasswordChangePayload {
+  requiresPasswordChange: true;
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+  resolvedRole: Role;
+  currentPassword: string;
 }
 
 /** Cuando el usuario tiene 2FA activado, el login devuelve esto en lugar de tokens. */
@@ -174,12 +186,15 @@ export interface AdminUserSettings {
   last_login_at?: string | null;
   created_at: string;
   updated_at: string;
+  must_change_password?: boolean;
 }
 
 export interface InviteAdminRequest {
   email: string;
   role: Role;
   full_name?: string;
+  /** Temporary password for the new admin (min 8 chars); they must change it after first login. */
+  password: string;
 }
 
 export interface UpdateAdminRequest {
