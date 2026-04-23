@@ -767,6 +767,7 @@
       "colDetails": "Detalles",
       "empty": "Aún no hay entradas de auditoría.",
       "actions": {
+        "admin_invited": "Administrador del backoffice invitado",
         "user_deleted": "Usuario eliminado",
         "user_password_reset_triggered": "Restablecimiento de contraseña iniciado",
         "user_notification_sent": "Notificación enviada",

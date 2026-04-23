@@ -767,6 +767,7 @@
       "colDetails": "Details",
       "empty": "No audit entries yet.",
       "actions": {
+        "admin_invited": "Backoffice admin invited",
         "user_deleted": "User deleted",
         "user_password_reset_triggered": "Password reset triggered",
         "user_notification_sent": "Notification sent",
