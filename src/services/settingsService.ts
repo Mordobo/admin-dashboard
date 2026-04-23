@@ -48,6 +48,8 @@ const defaultPlatformConfig: PlatformConfig = {
   supported_cities: ["Bogotá", "Medellín", "Cali"],
   supported_languages: ["es", "en"],
   maintenance_mode: false,
+  app_version: null,
+  backoffice_version: null,
 };
 
 export async function getPlatformConfig(): Promise<PlatformConfig> {

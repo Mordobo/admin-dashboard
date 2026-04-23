@@ -12,6 +12,8 @@ const defaultConfig: PlatformConfigType = {
   supported_cities: ["Bogotá", "Medellín", "Cali"],
   supported_languages: ["es", "en"],
   maintenance_mode: false,
+  app_version: null,
+  backoffice_version: null,
 };
 
 export function PlatformConfigSection() {
@@ -84,6 +86,14 @@ export function PlatformConfigSection() {
               <span className="text-mordobo-textMuted">{t("settings.platform.readOnlyMaintenance")}</span>{" "}
               {config.maintenance_mode ? t("settings.platform.on") : t("settings.platform.off")}
             </div>
+            <div>
+              <span className="text-mordobo-textMuted">{t("settings.platform.readOnlyAppVersion")}</span>{" "}
+              {config.app_version || "—"}
+            </div>
+            <div>
+              <span className="text-mordobo-textMuted">{t("settings.platform.readOnlyBackofficeVersion")}</span>{" "}
+              {config.backoffice_version || "—"}
+            </div>
           </div>
         )}
       </div>
@@ -140,6 +150,32 @@ export function PlatformConfigSection() {
               min={0}
               value={form.job_amount_max}
               onChange={(e) => setForm((f) => ({ ...f, job_amount_max: Number(e.target.value) }))}
+              className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+              {t("settings.platform.appVersion")}
+            </label>
+            <input
+              type="text"
+              value={form.app_version ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, app_version: e.target.value }))}
+              placeholder={t("settings.platform.appVersionPlaceholder")}
+              className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+              {t("settings.platform.backofficeVersion")}
+            </label>
+            <input
+              type="text"
+              value={form.backoffice_version ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, backoffice_version: e.target.value }))}
+              placeholder={t("settings.platform.backofficeVersionPlaceholder")}
               className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
             />
           </div>

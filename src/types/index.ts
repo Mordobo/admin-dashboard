@@ -209,6 +209,8 @@ export interface PlatformConfig {
   supported_cities: string[];
   supported_languages: string[];
   maintenance_mode: boolean;
+  app_version?: string | null;
+  backoffice_version?: string | null;
 }
 
 export interface EmailTemplate {
