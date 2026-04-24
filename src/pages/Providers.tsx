@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useLayoutEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getCategoriesTree } from "@/services/categoriesService";
@@ -97,11 +97,34 @@ export function Providers() {
     queryFn: ({ queryKey }) => fetchProviders(queryKey[1] as ProviderListParams),
   });
 
-  const { data: detail, isLoading: detailLoading } = useQuery({
+  const {
+    data: detail,
+    isPending: detailPending,
+    isFetching: detailFetching,
+  } = useQuery({
     queryKey: ["provider-detail", detailId],
-    queryFn: () => (detailId ? fetchProvider(detailId) : Promise.resolve(null)),
+    // Read id from queryKey (not closure) so the response always maps to the open provider when switching quickly.
+    queryFn: ({ queryKey, signal }) => {
+      const id = queryKey[1] as string | null;
+      if (!id) return Promise.resolve(null);
+      return fetchProvider(id, signal);
+    },
     enabled: !!detailId,
   });
+
+  const detailSafe =
+    detail && detailId && detail.profile.id === detailId ? detail : null;
+  const detailIdMismatch = Boolean(detail && detailId && detail.profile.id !== detailId);
+
+  useLayoutEffect(() => {
+    if (!detailId || !detail || !detailIdMismatch) return;
+    queryClient.removeQueries({ queryKey: ["provider-detail", detailId] });
+  }, [detailId, detail, detailIdMismatch, queryClient]);
+
+  const detailLoading =
+    Boolean(detailId) &&
+    !detailSafe &&
+    (detailIdMismatch || detailPending || detailFetching);
 
   const statusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: "active" | "suspended" | "banned" }) =>
@@ -501,48 +524,48 @@ export function Providers() {
           <h2 className="text-lg font-semibold text-mordobo-text mb-4">{t("providers.providerDetail")}</h2>
           {detailLoading ? (
             <p className="text-mordobo-textSecondary">{t("common.loading")}</p>
-          ) : detail ? (
+          ) : detailSafe ? (
             <ProviderDetailPanel
-              detail={detail}
+              detail={detailSafe}
               rowCategoryDisplay={rowCategoryDisplay}
               formatDate={formatDate}
               formatMoney={formatMoney}
               onClose={() => setDetailId(null)}
               onSuspendToggle={() => {
-                const s = normalizeEnumKey(detail.profile.status);
+                const s = normalizeEnumKey(detailSafe.profile.status);
                 statusMutation.mutate({
-                  id: detail.profile.id,
+                  id: detailSafe.profile.id,
                   status: s === "suspended" ? "active" : "suspended",
                 });
               }}
               onBanToggle={() => {
-                const s = normalizeEnumKey(detail.profile.status);
+                const s = normalizeEnumKey(detailSafe.profile.status);
                 statusMutation.mutate({
-                  id: detail.profile.id,
+                  id: detailSafe.profile.id,
                   status: s === "banned" ? "active" : "banned",
                 });
               }}
               onDelete={() =>
                 setProviderDeleteStep({
-                  id: detail.profile.id,
+                  id: detailSafe.profile.id,
                   name:
-                    detail.profile.business_name?.trim() ||
-                    detail.profile.full_name ||
-                    detail.profile.email ||
-                    detail.profile.id,
+                    detailSafe.profile.business_name?.trim() ||
+                    detailSafe.profile.full_name ||
+                    detailSafe.profile.email ||
+                    detailSafe.profile.id,
                   step: 1,
                 })
               }
-              onVerify={() => verifyMutation.mutate(detail.profile.id)}
-              onFeature={() => featureMutation.mutate(detail.profile.id)}
+              onVerify={() => verifyMutation.mutate(detailSafe.profile.id)}
+              onFeature={() => featureMutation.mutate(detailSafe.profile.id)}
               onEditCommission={() => {
                 setCommissionModal({
-                  id: detail.profile.id,
-                  current: detail.profile.commission_rate,
+                  id: detailSafe.profile.id,
+                  current: detailSafe.profile.commission_rate,
                 });
                 setCommissionInput(
-                  detail.profile.commission_rate != null
-                    ? String(detail.profile.commission_rate)
+                  detailSafe.profile.commission_rate != null
+                    ? String(detailSafe.profile.commission_rate)
                     : ""
                 );
               }}
