@@ -78,6 +78,7 @@
     "names": {
       "home_repairs": "Hogar y reparaciones",
       "home_and_repairs": "Hogar y reparaciones",
+      "plomeria": "Plomería",
       "cleaning": "Limpieza",
       "beauty_personal_care": "Belleza y cuidado personal",
       "beauty_and_personal_care": "Belleza y cuidado personal",
@@ -377,6 +378,12 @@
     "profileComplete": "Perfil completo",
     "activityLog": "Registro de actividad",
     "noActivityRecorded": "No hay actividad registrada.",
+    "activityEvents": {
+      "notes_saved": "Notas guardadas",
+      "checklist_updated": "Lista de verificación actualizada",
+      "approved": "Solicitud aprobada",
+      "rejected": "Solicitud rechazada"
+    },
     "approveApplicationConfirm": "¿Aprobar solicitud?",
     "approveApplicationMessage": "Se creará una cuenta de proveedor y se actualizará el estado de la solicitud.",
     "approving": "Aprobando...",
@@ -536,7 +543,25 @@
     "statusBanned": "Baneado",
     "statusDeleted": "Eliminado",
     "statusPending": "Pendiente",
-    "accountDeletedHint": "Cuenta eliminada. Las acciones están deshabilitadas hasta restaurarla en la base de datos."
+    "accountDeletedHint": "Cuenta eliminada. Las acciones están deshabilitadas hasta restaurarla en la base de datos.",
+    "addressDefaultMark": "(predeterminada)",
+    "activityBy": "por",
+    "paymentMethodTypes": {
+      "card": "Tarjeta",
+      "credit_card": "Tarjeta de crédito",
+      "debit_card": "Tarjeta de débito",
+      "apple_pay": "Apple Pay",
+      "google_pay": "Google Pay",
+      "cash": "Efectivo",
+      "bank_transfer": "Transferencia bancaria",
+      "paypal": "PayPal"
+    },
+    "activityActions": {
+      "user_status_updated": "Estado de usuario actualizado",
+      "user_notification_sent": "Notificación enviada al usuario",
+      "user_password_reset_triggered": "Restablecimiento de contraseña solicitado",
+      "user_deleted": "Usuario eliminado (lógico)"
+    }
   },
   "providers": {
     "title": "Gestión de proveedores",
@@ -614,6 +639,7 @@
       "cancelled": "Cancelado",
       "pending": "Pendiente",
       "in_progress": "En curso",
+      "pending_review": "Pendiente de revisión",
       "failed": "Fallido"
     },
     "verifiedBadgeTitle": "Verificado",

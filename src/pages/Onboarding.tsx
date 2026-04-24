@@ -15,7 +15,11 @@ import {
   approveOnboardingApplication,
   rejectOnboardingApplication,
 } from "@/services/onboardingService";
-import { translateFreeformCatalogName } from "@/utils/adminLocale";
+import {
+  normalizeEnumKey,
+  translateFreeformCatalogName,
+  translateOnboardingActivityEvent,
+} from "@/utils/adminLocale";
 import type { OnboardingDocumentItem } from "@/types";
 
 const CHECKLIST_KEYS: string[] = [
@@ -58,7 +62,8 @@ const ONBOARDING_STATUS_LABEL_KEY: Record<string, string> = {
 };
 
 function onboardingStatusText(t: (key: string) => string, status: string): string {
-  const key = ONBOARDING_STATUS_LABEL_KEY[status];
+  const norm = normalizeEnumKey(status);
+  const key = ONBOARDING_STATUS_LABEL_KEY[norm];
   return key ? t(key) : status.replace(/_/g, " ");
 }
 
@@ -360,10 +365,10 @@ export function Onboarding() {
                       className="text-[13px] text-mordobo-textSecondary border-l-2 border-mordobo-border pl-3 py-1"
                     >
                       <span className="font-medium text-mordobo-text">
-                        {entry.eventType.replace(/_/g, " ")}
+                        {translateOnboardingActivityEvent(t, entry.eventType)}
                       </span>
                       <span className="block text-xs text-mordobo-textMuted">
-                        {new Date(entry.createdAt).toLocaleString()}
+                        {new Date(entry.createdAt).toLocaleString(i18n.language)}
                       </span>
                     </li>
                   ))}

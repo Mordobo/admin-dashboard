@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "./api";
 import type {
   ProviderListItem,
@@ -42,11 +43,17 @@ export async function fetchProviders(
   };
 }
 
-export async function fetchProvider(id: string): Promise<ProviderDetail | null> {
+export async function fetchProvider(
+  id: string,
+  signal?: AbortSignal
+): Promise<ProviderDetail | null> {
   try {
-    const { data } = await api.get<{ provider: ProviderDetail }>(`${BASE}/${id}`);
+    const { data } = await api.get<{ provider: ProviderDetail }>(`${BASE}/${id}`, { signal });
     return data?.provider ?? null;
-  } catch {
+  } catch (err: unknown) {
+    if (signal?.aborted || axios.isCancel(err)) {
+      throw err;
+    }
     return null;
   }
 }

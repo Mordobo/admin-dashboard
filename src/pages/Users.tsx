@@ -12,6 +12,12 @@ import {
 import type { ClientListItem, ClientDetail, ClientListParams } from "@/types";
 import { Badge } from "@/components/Badge";
 import { APP_VERSION } from "@/utils/appVersion";
+import {
+  translateFreeformCatalogName,
+  translateJobOrderStatus,
+  translatePaymentMethodType,
+  translateUserActivityAction,
+} from "@/utils/adminLocale";
 
 function formatDate(iso: string, locale: string): string {
   try {
@@ -657,9 +663,9 @@ function UserDetailPanel({
                       {formatDate(b.activity_at ?? b.scheduled_at ?? b.created_at, i18n.language)}
                     </td>
                     <td className="py-1.5 pr-2 text-mordobo-textSecondary">
-                      {b.service_name ?? "—"}
+                      {translateFreeformCatalogName(t, b.service_name ?? "")}
                     </td>
-                    <td className="py-1.5 pr-2">{b.order_status}</td>
+                    <td className="py-1.5 pr-2">{translateJobOrderStatus(t, b.order_status)}</td>
                     <td className="py-1.5 text-right text-mordobo-text">
                       {b.total_amount != null ? `$${Number(b.total_amount).toFixed(2)}` : "—"}
                     </td>
@@ -696,7 +702,7 @@ function UserDetailPanel({
         ) : (
           <ul className="text-sm text-mordobo-textSecondary space-y-1">
             {payment_methods.map((p, i) => (
-              <li key={i}>{p.payment_method}</li>
+              <li key={i}>{translatePaymentMethodType(t, p.payment_method)}</li>
             ))}
           </ul>
         )}
@@ -711,7 +717,7 @@ function UserDetailPanel({
                 {a.name ?? "Address"}: {[a.address_line1, a.city, a.state, a.postal_code, a.country]
                   .filter(Boolean)
                   .join(", ")}
-                {a.is_default ? " (default)" : ""}
+                {a.is_default ? ` ${t("users.addressDefaultMark")}` : ""}
               </li>
             ))}
           </ul>
@@ -726,11 +732,13 @@ function UserDetailPanel({
           <ul className="space-y-2">
             {activity_log.slice(0, 20).map((a) => (
               <li key={a.id} className="text-sm border-b border-mordobo-border/50 pb-2">
-                <span className="text-mordobo-text font-medium">{a.action_type}</span>
+                <span className="text-mordobo-text font-medium">
+                  {translateUserActivityAction(t, a.action_type)}
+                </span>
                 {a.admin_name || a.admin_email ? (
                   <span className="text-mordobo-textMuted">
                     {" "}
-                    by {a.admin_name || a.admin_email}
+                    {t("users.activityBy")} {a.admin_name || a.admin_email}
                   </span>
                 ) : null}{" "}
                 · {formatDate(a.created_at, i18n.language)}
