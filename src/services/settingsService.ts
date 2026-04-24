@@ -35,6 +35,11 @@ export async function deactivateAdminUser(id: string): Promise<{ user: AdminUser
   return updateAdminUser(id, { status: "inactive" });
 }
 
+/** Super admin only. Removes the backoffice admin row (cannot delete own id). */
+export async function deleteAdminUser(id: string): Promise<void> {
+  await api.delete(`${BASE}/users/${encodeURIComponent(id)}`);
+}
+
 // --- Platform Config ---
 const defaultPlatformConfig: PlatformConfig = {
   service_fee_percentage: 10,
@@ -43,6 +48,8 @@ const defaultPlatformConfig: PlatformConfig = {
   supported_cities: ["Bogotá", "Medellín", "Cali"],
   supported_languages: ["es", "en"],
   maintenance_mode: false,
+  app_version: null,
+  backoffice_version: null,
 };
 
 export async function getPlatformConfig(): Promise<PlatformConfig> {

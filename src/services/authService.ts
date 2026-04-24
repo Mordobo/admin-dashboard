@@ -14,6 +14,23 @@ const AUTH_ADMIN_BASE = (import.meta.env.VITE_AUTH_ADMIN_URL as string | undefin
 
 export type LoginResult = LoginResponse | LoginRequires2FA;
 
+const AUTH_ADMIN_PASSWORD = "/auth/admin/password";
+
+export async function changeAdminPassword(
+  accessToken: string,
+  payload: { currentPassword: string; newPassword: string }
+): Promise<void> {
+  if (AUTH_ADMIN_BASE) {
+    await axios.post(`${AUTH_ADMIN_BASE}${AUTH_ADMIN_PASSWORD}`, payload, {
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
+    });
+    return;
+  }
+  await api.post(AUTH_ADMIN_PASSWORD, payload, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
 export async function login(email: string, password: string): Promise<LoginResult> {
   // Login de admins: tabla backoffice_admins. Si hay URL dedicada la usamos; si no, misma API base con /auth/admin/login
   if (AUTH_ADMIN_BASE) {

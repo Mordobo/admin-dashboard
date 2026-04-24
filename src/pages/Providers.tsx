@@ -902,7 +902,11 @@ function ProviderDetailPanel({
                     <td className="py-1.5 pr-2 text-mordobo-textSecondary">{j.service_name ?? "—"}</td>
                     <td className="py-1.5 pr-2">{translateJobOrderStatus(t, j.order_status)}</td>
                     <td className="py-1.5 text-right text-mordobo-text">
-                      {j.payment_amount != null ? formatMoney(j.payment_amount) : "—"}
+                      {j.payment_amount != null
+                        ? formatMoney(j.payment_amount)
+                        : j.total_amount != null
+                          ? formatMoney(j.total_amount)
+                          : "—"}
                     </td>
                   </tr>
                 ))}
