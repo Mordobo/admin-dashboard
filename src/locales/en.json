@@ -798,12 +798,39 @@
       "colResource": "Resource",
       "colDetails": "Details",
       "empty": "No audit entries yet.",
+      "noResource": "No resource",
+      "noDetails": "—",
+      "deletedResource": "Deleted resource",
+      "idLabel": "ID",
       "actions": {
         "admin_invited": "Backoffice admin invited",
         "user_deleted": "User deleted",
         "user_password_reset_triggered": "Password reset triggered",
         "user_notification_sent": "Notification sent",
         "user_status_updated": "User status updated"
+      },
+      "resourceTypes": {
+        "client": "Client",
+        "provider": "Provider",
+        "admin": "Admin",
+        "booking": "Booking",
+        "service": "Service",
+        "category": "Category"
+      },
+      "details": {
+        "user_status_updated_prefix": "Status changed to",
+        "user_notification_sent": "Subject: \"{{subject}}\"",
+        "user_password_reset_triggered": "Password reset email sent to user",
+        "user_deleted": "Account soft-deleted",
+        "admin_invited": "Invitation sent to {{email}}"
+      },
+      "statusValues": {
+        "active": "Active",
+        "suspended": "Suspended",
+        "banned": "Banned",
+        "blocked": "Blocked",
+        "pending": "Pending",
+        "deleted": "Deleted"
       }
     },
     "email": {

@@ -231,6 +231,10 @@ export interface AuditLogEntry {
   action_type: string;
   resource_type: string | null;
   resource_id: string | null;
+  /** Friendly label for the affected resource (e.g. client full name). May be null if resource was deleted or unknown. */
+  resource_label?: string | null;
+  /** Optional secondary identifier for the resource (e.g. client email). */
+  resource_email?: string | null;
   details: Record<string, unknown> | null;
   created_at: string;
 }

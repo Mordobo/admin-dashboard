@@ -798,12 +798,39 @@
       "colResource": "Recurso",
       "colDetails": "Detalles",
       "empty": "Aún no hay entradas de auditoría.",
+      "noResource": "Sin recurso",
+      "noDetails": "—",
+      "deletedResource": "Recurso eliminado",
+      "idLabel": "ID",
       "actions": {
         "admin_invited": "Administrador del backoffice invitado",
         "user_deleted": "Usuario eliminado",
         "user_password_reset_triggered": "Restablecimiento de contraseña iniciado",
         "user_notification_sent": "Notificación enviada",
         "user_status_updated": "Estado de usuario actualizado"
+      },
+      "resourceTypes": {
+        "client": "Cliente",
+        "provider": "Proveedor",
+        "admin": "Administrador",
+        "booking": "Reserva",
+        "service": "Servicio",
+        "category": "Categoría"
+      },
+      "details": {
+        "user_status_updated_prefix": "Estado cambiado a",
+        "user_notification_sent": "Asunto: \"{{subject}}\"",
+        "user_password_reset_triggered": "Email de restablecimiento enviado al usuario",
+        "user_deleted": "Cuenta eliminada (soft delete)",
+        "admin_invited": "Invitación enviada a {{email}}"
+      },
+      "statusValues": {
+        "active": "Activo",
+        "suspended": "Suspendido",
+        "banned": "Bloqueado",
+        "blocked": "Restringido",
+        "pending": "Pendiente",
+        "deleted": "Eliminado"
       }
     },
     "email": {
