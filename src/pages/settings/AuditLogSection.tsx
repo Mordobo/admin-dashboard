@@ -10,8 +10,12 @@ const ACTION_BADGE_COLOR: Record<string, "success" | "warning" | "danger" | "inf
   user_password_reset_triggered: "warning",
   user_deleted: "danger",
   admin_invited: "success",
+  backoffice_admin_status_updated: "info",
+  backoffice_admin_role_updated: "accent",
+  backoffice_admin_deleted: "danger",
 };
 
+/** Client account statuses (users module). */
 const STATUS_BADGE_COLOR: Record<string, "success" | "warning" | "danger" | "info" | "accent"> = {
   active: "success",
   suspended: "warning",
@@ -19,6 +23,19 @@ const STATUS_BADGE_COLOR: Record<string, "success" | "warning" | "danger" | "inf
   blocked: "danger",
   pending: "info",
   deleted: "danger",
+};
+
+/** Backoffice admin account statuses (System Settings → Admin Users). */
+const BACKOFFICE_ADMIN_STATUS_BADGE: Record<string, "success" | "warning" | "danger" | "info" | "accent"> = {
+  active: "success",
+  inactive: "danger",
+  invited: "info",
+};
+
+const BACKOFFICE_ROLE_BADGE: Record<string, "success" | "warning" | "danger" | "info" | "accent"> = {
+  super_admin: "danger",
+  admin: "info",
+  moderator: "accent",
 };
 
 function shortId(value: string | null | undefined): string {
@@ -70,6 +87,44 @@ export function AuditLogSection() {
           </span>
         );
       }
+      case "backoffice_admin_status_updated": {
+        const previousStatus = String(details.previous_status ?? "");
+        const nextStatus = String(details.status ?? "");
+        const prevLabel = previousStatus
+          ? t(`settings.adminStatus.${previousStatus}`, { defaultValue: previousStatus })
+          : "—";
+        const nextLabel = nextStatus
+          ? t(`settings.adminStatus.${nextStatus}`, { defaultValue: nextStatus })
+          : "—";
+        return (
+          <span className="inline-flex items-center gap-1.5 flex-wrap text-mordobo-textSecondary">
+            <span>{t("settings.audit.details.backoffice_admin_status_prefix")}</span>
+            <Badge color={BACKOFFICE_ADMIN_STATUS_BADGE[previousStatus] ?? "info"}>{prevLabel}</Badge>
+            <span aria-hidden>{t("settings.audit.details.backoffice_admin_status_arrow")}</span>
+            <Badge color={BACKOFFICE_ADMIN_STATUS_BADGE[nextStatus] ?? "info"}>{nextLabel}</Badge>
+          </span>
+        );
+      }
+      case "backoffice_admin_role_updated": {
+        const previousRole = String(details.previous_role ?? "");
+        const nextRole = String(details.role ?? "");
+        const prevLabel = previousRole
+          ? t(`dashboard.userRole.${previousRole}`, { defaultValue: previousRole })
+          : "—";
+        const nextLabel = nextRole ? t(`dashboard.userRole.${nextRole}`, { defaultValue: nextRole }) : "—";
+        return (
+          <span className="inline-flex items-center gap-1.5 flex-wrap text-mordobo-textSecondary">
+            <span>{t("settings.audit.details.backoffice_admin_role_prefix")}</span>
+            <Badge color={BACKOFFICE_ROLE_BADGE[previousRole] ?? "info"}>{prevLabel}</Badge>
+            <span aria-hidden>{t("settings.audit.details.backoffice_admin_role_arrow")}</span>
+            <Badge color={BACKOFFICE_ROLE_BADGE[nextRole] ?? "info"}>{nextLabel}</Badge>
+          </span>
+        );
+      }
+      case "backoffice_admin_deleted":
+        return (
+          <span className="text-mordobo-textSecondary">{t("settings.audit.details.backoffice_admin_deleted")}</span>
+        );
       case "user_notification_sent": {
         const subject = String(details.subject ?? "");
         return (
@@ -79,7 +134,7 @@ export function AuditLogSection() {
         );
       }
       case "admin_invited": {
-        const email = String(details.email ?? "—");
+        const email = String(details.invited_email ?? details.email ?? "—");
         return (
           <span className="text-mordobo-textSecondary" title={email}>
             {t("settings.audit.details.admin_invited", { email })}
@@ -124,7 +179,16 @@ export function AuditLogSection() {
     }
 
     const typeLabel = formatResourceType(entry.resource_type);
-    const primary = entry.resource_label?.trim() || entry.resource_email?.trim() || null;
+    const detailMap = (entry.details ?? {}) as Record<string, unknown>;
+    const deletedName =
+      typeof detailMap.deleted_full_name === "string" ? detailMap.deleted_full_name.trim() : "";
+    const deletedEmail = typeof detailMap.deleted_email === "string" ? detailMap.deleted_email.trim() : "";
+    const primary =
+      entry.resource_label?.trim() ||
+      entry.resource_email?.trim() ||
+      deletedName ||
+      deletedEmail ||
+      null;
     const idShort = shortId(entry.resource_id);
 
     return (
@@ -143,8 +207,14 @@ export function AuditLogSection() {
             #{idShort}
           </div>
         )}
-        {primary && entry.resource_email && entry.resource_label && entry.resource_email !== primary && (
-          <div className="text-[12px] text-mordobo-textMuted truncate">{entry.resource_email}</div>
+        {primary &&
+          entry.resource_email &&
+          entry.resource_label &&
+          entry.resource_email !== primary && (
+            <div className="text-[12px] text-mordobo-textMuted truncate">{entry.resource_email}</div>
+          )}
+        {deletedName && deletedEmail && deletedEmail !== deletedName && (
+          <div className="text-[12px] text-mordobo-textMuted truncate">{deletedEmail}</div>
         )}
       </div>
     );
