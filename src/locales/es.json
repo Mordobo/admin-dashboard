@@ -804,6 +804,9 @@
       "idLabel": "ID",
       "actions": {
         "admin_invited": "Administrador del backoffice invitado",
+        "backoffice_admin_status_updated": "Estado de administrador del backoffice cambiado",
+        "backoffice_admin_role_updated": "Rol de administrador del backoffice cambiado",
+        "backoffice_admin_deleted": "Administrador del backoffice eliminado",
         "user_deleted": "Usuario eliminado",
         "user_password_reset_triggered": "Restablecimiento de contraseña iniciado",
         "user_notification_sent": "Notificación enviada",
@@ -813,12 +816,18 @@
         "client": "Cliente",
         "provider": "Proveedor",
         "admin": "Administrador",
+        "backoffice_admin": "Administrador del backoffice",
         "booking": "Reserva",
         "service": "Servicio",
         "category": "Categoría"
       },
       "details": {
         "user_status_updated_prefix": "Estado cambiado a",
+        "backoffice_admin_status_prefix": "Estado",
+        "backoffice_admin_status_arrow": "→",
+        "backoffice_admin_role_prefix": "Rol",
+        "backoffice_admin_role_arrow": "→",
+        "backoffice_admin_deleted": "Administrador eliminado permanentemente del backoffice.",
         "user_notification_sent": "Asunto: \"{{subject}}\"",
         "user_password_reset_triggered": "Email de restablecimiento enviado al usuario",
         "user_deleted": "Cuenta eliminada (soft delete)",
