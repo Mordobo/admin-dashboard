@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import * as authService from "@/services/authService";
-import type { AuthState, Role, User } from "@/types";
+import type { AuthState, LoginPasswordChangePayload, Role, User } from "@/types";
 import { isBackofficeRole } from "@/types";
 import { STORAGE_KEYS } from "@/utils/constants";
 
@@ -24,9 +24,11 @@ export type Login2FAPayload = { twoFaToken: string; email: string; user: User };
 
 const AuthContext = createContext<{
   auth: AuthState;
-  /** Retorna undefined si el login fue exitoso; si requiere 2FA retorna el payload para el segundo paso. */
-  login: (email: string, password: string) => Promise<Login2FAPayload | undefined>;
+  /** Retorna undefined si el login fue exitoso; si requiere 2FA o cambio de contraseña, el payload correspondiente. */
+  login: (email: string, password: string) => Promise<Login2FAPayload | LoginPasswordChangePayload | undefined>;
   completeLoginWith2FA: (twoFaToken: string, code: string) => Promise<void>;
+  /** Tras login con contraseña temporal: establece nueva contraseña y persiste la sesión. */
+  completePasswordChange: (payload: LoginPasswordChangePayload, newPassword: string) => Promise<void>;
   logout: () => void;
   setUser: (user: User | null) => void;
   setRole: (role: Role) => void;
@@ -64,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("auth:logout", onLogout);
   }, [logout]);
 
-  const login = useCallback(async (email: string, password: string): Promise<Login2FAPayload | undefined> => {
+  const login = useCallback(async (email: string, password: string): Promise<Login2FAPayload | LoginPasswordChangePayload | undefined> => {
     const res = await authService.login(email, password);
     if ("requires_2fa" in res && res.requires_2fa) {
       return { twoFaToken: res.twoFaToken, email: res.email, user: res.user };
@@ -80,6 +82,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!resolvedRole) {
       throw new BackofficeAccessDeniedError();
     }
+    if ("requires_password_change" in res && res.requires_password_change === true) {
+      return {
+        requiresPasswordChange: true,
+        accessToken: res.accessToken,
+        refreshToken: res.refreshToken,
+        user: res.user,
+        resolvedRole,
+        currentPassword: password,
+      };
+    }
     authService.persistAuth(res.accessToken, res.refreshToken, res.user, resolvedRole);
     setAuth({
       accessToken: res.accessToken,
@@ -88,6 +100,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: resolvedRole,
     });
     return undefined;
+  }, []);
+
+  const completePasswordChange = useCallback(async (payload: LoginPasswordChangePayload, newPassword: string) => {
+    await authService.changeAdminPassword(payload.accessToken, {
+      currentPassword: payload.currentPassword,
+      newPassword,
+    });
+    authService.persistAuth(payload.accessToken, payload.refreshToken, payload.user, payload.resolvedRole);
+    setAuth({
+      accessToken: payload.accessToken,
+      refreshToken: payload.refreshToken,
+      user: payload.user,
+      role: payload.resolvedRole,
+    });
   }, []);
 
   const completeLoginWith2FA = useCallback(async (twoFaToken: string, code: string) => {
@@ -127,12 +153,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       auth,
       login,
       completeLoginWith2FA,
+      completePasswordChange,
       logout,
       setUser,
       setRole,
       isAuthenticated: !!auth.accessToken && !!auth.user,
     }),
-    [auth, login, completeLoginWith2FA, logout, setUser, setRole]
+    [auth, login, completeLoginWith2FA, completePasswordChange, logout, setUser, setRole]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,3 +1,4 @@
+import axios from "axios";
 import api from "./api";
 import type {
   ProviderListItem,
@@ -18,9 +19,12 @@ function buildParams(params: ProviderListParams): Record<string, string | number
   const out: Record<string, string | number | undefined> = {};
   if (params.page != null) out.page = params.page;
   if (params.limit != null) out.limit = params.limit;
-  if (params.search) out.search = params.search;
-  if (params.status) out.status = params.status;
-  if (params.category) out.category = params.category;
+  if (params.search != null && params.search !== "") out.search = params.search;
+  if (params.status != null && params.status !== "") out.status = params.status;
+  const hasSubcategory = params.subcategory != null && params.subcategory !== "";
+  // Mutual exclusivity: when subcategory is selected, do not send category.
+  if (!hasSubcategory && params.category != null && params.category !== "") out.category = params.category;
+  if (hasSubcategory) out.subcategory = params.subcategory;
   if (params.rating != null) out.rating = params.rating;
   return out;
 }
@@ -39,20 +43,30 @@ export async function fetchProviders(
   };
 }
 
-export async function fetchProvider(id: string): Promise<ProviderDetail | null> {
+export async function fetchProvider(
+  id: string,
+  signal?: AbortSignal
+): Promise<ProviderDetail | null> {
   try {
-    const { data } = await api.get<{ provider: ProviderDetail }>(`${BASE}/${id}`);
+    const { data } = await api.get<{ provider: ProviderDetail }>(`${BASE}/${id}`, { signal });
     return data?.provider ?? null;
-  } catch {
+  } catch (err: unknown) {
+    if (signal?.aborted || axios.isCancel(err)) {
+      throw err;
+    }
     return null;
   }
 }
 
 export async function updateProviderStatus(
   id: string,
-  status: "active" | "suspended"
+  status: "active" | "suspended" | "banned"
 ): Promise<void> {
   await api.put(`${BASE}/${id}/status`, { status });
+}
+
+export async function deleteProvider(id: string): Promise<void> {
+  await api.delete(`${BASE}/${id}`);
 }
 
 export async function toggleProviderVerify(id: string): Promise<void> {

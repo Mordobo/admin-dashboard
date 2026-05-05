@@ -141,3 +141,39 @@ export function buildCategoryLookup(
 
   return { rowCategoryDisplay };
 }
+
+/** Job / booking order status from API (snake_case) → `providers.jobOrderStatus.*`. */
+export function translateJobOrderStatus(t: TFunction, raw: string | null | undefined): string {
+  if (!raw?.trim()) return "—";
+  const n = normalizeEnumKey(raw);
+  return t(`providers.jobOrderStatus.${n}`, { defaultValue: raw });
+}
+
+/** Complaint submitter / dashboard widgets: `dashboard.userRole.*`. */
+export function translateDashboardUserRole(t: TFunction, raw: string | null | undefined): string {
+  if (!raw?.trim()) return "";
+  const n = normalizeEnumKey(raw);
+  return t(`dashboard.userRole.${n}`, { defaultValue: raw });
+}
+
+/** Client admin activity log `action_type` → `users.activityActions.*`. */
+export function translateUserActivityAction(t: TFunction, raw: string | null | undefined): string {
+  if (!raw?.trim()) return "";
+  const n = normalizeEnumKey(raw);
+  return t(`users.activityActions.${n}`, { defaultValue: raw });
+}
+
+/** Provider onboarding activity `eventType` → `onboarding.activityEvents.*`. */
+export function translateOnboardingActivityEvent(t: TFunction, raw: string | null | undefined): string {
+  if (!raw?.trim()) return "";
+  const n = normalizeEnumKey(raw);
+  const human = raw.trim().replace(/_/g, " ");
+  return t(`onboarding.activityEvents.${n}`, { defaultValue: human });
+}
+
+/** Saved payment method code (e.g. card) → `users.paymentMethodTypes.*`. */
+export function translatePaymentMethodType(t: TFunction, raw: string | null | undefined): string {
+  if (!raw?.trim()) return "—";
+  const n = normalizeEnumKey(raw);
+  return t(`users.paymentMethodTypes.${n}`, { defaultValue: raw });
+}

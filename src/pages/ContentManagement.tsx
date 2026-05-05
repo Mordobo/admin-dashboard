@@ -1,5 +1,5 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useSearchParams } from "react-router-dom";
 import { FaqsSection } from "./content/FaqsSection";
 import { LegalSection } from "./content/LegalSection";
 import { NotificationsSection } from "./content/NotificationsSection";
@@ -15,9 +15,21 @@ const TAB_ICONS: Record<(typeof TAB_IDS)[number], string> = {
 
 type TabId = (typeof TAB_IDS)[number];
 
+const VALID_TABS = new Set<TabId>(TAB_IDS);
+
+function tabFromSearchParams(raw: string | null): TabId {
+  if (raw && VALID_TABS.has(raw as TabId)) return raw as TabId;
+  return "faqs";
+}
+
 export function ContentManagement() {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<TabId>("faqs");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = tabFromSearchParams(searchParams.get("tab"));
+
+  const setActiveTab = (tab: TabId) => {
+    setSearchParams({ tab }, { replace: true });
+  };
 
   return (
     <div>

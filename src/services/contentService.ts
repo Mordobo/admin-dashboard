@@ -3,6 +3,7 @@ import type {
   FaqCategory,
   FaqQuestion,
   FaqAnswer,
+  FaqAudience,
   LegalDocument,
   LegalDocumentVersion,
   LegalDocType,
@@ -16,14 +17,17 @@ const CONTENT_BASE = "/api/admin/content";
 const NOTIFICATIONS_BASE = "/api/admin/notifications";
 
 // --- FAQs ---
+/** List all FAQ categories with nested questions and answers from the API (DB). */
 export async function listFaqs(): Promise<FaqCategory[]> {
-  try {
-    const { data } = await api.get<{ categories?: FaqCategory[]; data?: FaqCategory[] }>(`${CONTENT_BASE}/faqs`);
-    const list = data?.categories ?? data?.data;
-    return Array.isArray(list) ? list : [];
-  } catch {
-    return [];
-  }
+  const { data } = await api.get<{ categories?: FaqCategory[]; data?: FaqCategory[] }>(`${CONTENT_BASE}/faqs`);
+  const list = data?.categories ?? data?.data;
+  if (!Array.isArray(list)) return [];
+  return list.map((cat) => ({
+    ...cat,
+    questions: Array.isArray(cat.questions)
+      ? cat.questions.map((q) => ({ ...q, answers: Array.isArray(q.answers) ? q.answers : [] }))
+      : [],
+  }));
 }
 
 export async function createFaqCategory(payload: {
@@ -31,6 +35,8 @@ export async function createFaqCategory(payload: {
   title_es?: string;
   status?: ContentStatus;
   order?: number;
+  audience?: FaqAudience;
+  slug?: string;
 }): Promise<FaqCategory> {
   const { data } = await api.post<FaqCategory | { category: FaqCategory }>(`${CONTENT_BASE}/faqs`, payload);
   if (data && "category" in data) return data.category;
@@ -39,7 +45,7 @@ export async function createFaqCategory(payload: {
 
 export async function updateFaqCategory(
   id: string,
-  payload: Partial<Pick<FaqCategory, "title_en" | "title_es" | "status" | "order">>
+  payload: Partial<Pick<FaqCategory, "title_en" | "title_es" | "status" | "order" | "audience" | "slug">>
 ): Promise<FaqCategory> {
   const { data } = await api.put<FaqCategory | { category: FaqCategory }>(`${CONTENT_BASE}/faqs/${id}`, payload);
   if (data && "category" in data) return data.category;
@@ -52,7 +58,7 @@ export async function deleteFaqCategory(id: string): Promise<void> {
 
 export async function createFaqQuestion(
   categoryId: string,
-  payload: Partial<Pick<FaqQuestion, "question_en" | "question_es" | "status" | "order">>
+  payload: Partial<Pick<FaqQuestion, "question_en" | "question_es" | "status" | "order" | "audience">>
 ): Promise<FaqQuestion> {
   const { data } = await api.post<FaqQuestion | { question: FaqQuestion }>(
     `${CONTENT_BASE}/faqs/${categoryId}/questions`,
@@ -65,7 +71,7 @@ export async function createFaqQuestion(
 export async function updateFaqQuestion(
   categoryId: string,
   questionId: string,
-  payload: Partial<Pick<FaqQuestion, "question_en" | "question_es" | "status" | "order">>
+  payload: Partial<Pick<FaqQuestion, "question_en" | "question_es" | "status" | "order" | "audience">>
 ): Promise<FaqQuestion> {
   const { data } = await api.put<FaqQuestion | { question: FaqQuestion }>(
     `${CONTENT_BASE}/faqs/${categoryId}/questions/${questionId}`,
@@ -154,8 +160,14 @@ export async function getLegalDocumentVersions(docType: LegalDocType): Promise<L
 }
 
 // --- Push Notifications ---
-export async function sendNotification(payload: SendNotificationRequest): Promise<{ id?: string }> {
-  const { data } = await api.post<{ id?: string }>(`${NOTIFICATIONS_BASE}/send`, payload);
+export async function sendNotification(payload: SendNotificationRequest): Promise<{
+  id?: string;
+  recipientsCount?: number;
+}> {
+  const { data } = await api.post<{ id?: string; recipientsCount?: number }>(
+    `${NOTIFICATIONS_BASE}/send`,
+    payload
+  );
   return data ?? {};
 }
 

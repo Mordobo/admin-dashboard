@@ -1,8 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { NAV_ITEMS } from "@/utils/constants";
+import { APP_VERSION } from "@/utils/appVersion";
 import { useState } from "react";
+import { getPlatformConfig } from "@/services/settingsService";
 
 function getInitials(name: string): string {
   return name
@@ -27,9 +30,15 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
   const { t } = useTranslation();
   const { auth } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const { data: platformConfig } = useQuery({
+    queryKey: ["settings-platform"],
+    queryFn: getPlatformConfig,
+    staleTime: 30_000,
+  });
   const user = auth.user;
   const displayName = user?.full_name ?? "Admin";
   const role = roleLabel(auth.role, t);
+  const visibleBackofficeVersion = platformConfig?.backoffice_version?.trim() || APP_VERSION;
 
   return (
     <>
@@ -61,6 +70,7 @@ export function Sidebar({ open = true, onClose }: SidebarProps) {
             <div className="min-w-0">
               <div className="text-base font-bold text-mordobo-text tracking-tight">Mordobo</div>
               <div className="text-[10px] text-mordobo-textMuted uppercase tracking-widest">{t("nav.backoffice")}</div>
+              <div className="text-[10px] text-mordobo-textMuted tracking-widest">v{visibleBackofficeVersion}</div>
             </div>
           )}
         </div>

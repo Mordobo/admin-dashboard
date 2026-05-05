@@ -5,7 +5,7 @@ import { StatCard } from "@/components/StatCard";
 import { Badge } from "@/components/Badge";
 import { fetchDashboardStats, listOnboardingRequests, listComplaints } from "@/services/adminService";
 import type { OnboardingRequest, Complaint } from "@/types";
-import { normalizeEnumKey, translateFreeformCatalogName } from "@/utils/adminLocale";
+import { normalizeEnumKey, translateDashboardUserRole, translateFreeformCatalogName } from "@/utils/adminLocale";
 
 function onboardingStatusLabel(
   t: (key: string) => string,
@@ -22,15 +22,9 @@ function complaintPriorityLabel(t: (key: string) => string, priority: string): s
   return out !== k ? out : priority;
 }
 
-function complaintRoleLabel(t: (key: string) => string, role: string): string {
-  const n = normalizeEnumKey(role);
-  const k = `dashboard.userRole.${n}`;
-  const out = t(k);
-  return out !== k ? out : role;
-}
-
 export function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language;
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: fetchDashboardStats,
@@ -83,7 +77,7 @@ export function Dashboard() {
             <StatCard
               icon="👥"
               label={t("dashboard.activeUsers")}
-              value={s.activeUsers.toLocaleString()}
+              value={s.activeUsers.toLocaleString(locale)}
               change={s.activeUsersChange}
               color="success"
             />
@@ -118,7 +112,8 @@ export function Dashboard() {
                 <div>
                   <div className="text-sm font-medium text-mordobo-text">{req.name}</div>
                   <div className="text-xs text-mordobo-textSecondary">
-                    {translateFreeformCatalogName(t, req.service)} · {req.location}
+                    {translateFreeformCatalogName(t, req.service)}
+                    {req.location ? ` · ${translateFreeformCatalogName(t, req.location)}` : ""}
                   </div>
                 </div>
                 <Badge
@@ -158,7 +153,7 @@ export function Dashboard() {
                 <div>
                   <div className="text-sm font-medium text-mordobo-text">{c.subject}</div>
                   <div className="text-xs text-mordobo-textSecondary">
-                    {c.from} · {complaintRoleLabel(t, c.role)}
+                    {c.from} · {translateDashboardUserRole(t, c.role)}
                   </div>
                 </div>
                 <Badge

@@ -11,6 +11,8 @@ export const NAV_ITEMS = [
   { id: "settings", path: "/settings", icon: "⚙️", label: "System Settings" },
 ] as const;
 
+export type NavItemId = (typeof NAV_ITEMS)[number]["id"];
+
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: "mordobo_backoffice_access_token",
   REFRESH_TOKEN: "mordobo_backoffice_refresh_token",

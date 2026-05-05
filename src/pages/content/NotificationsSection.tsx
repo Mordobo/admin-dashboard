@@ -1,21 +1,31 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { sendNotification, getNotificationHistory } from "@/services/contentService";
 import type { SendNotificationRequest } from "@/types";
 
-const TARGET_OPTIONS: { value: SendNotificationRequest["target"]; label: string }[] = [
-  { value: "all", label: "All users" },
-  { value: "clients", label: "Clients only" },
-  { value: "providers", label: "Providers only" },
-  { value: "user", label: "Single user (by ID)" },
-];
+const TARGET_VALUES: SendNotificationRequest["target"][] = ["all", "clients", "providers", "user"];
+
+const TARGET_I18N_KEY: Record<SendNotificationRequest["target"], string> = {
+  all: "content.pushTargetAll",
+  clients: "content.pushTargetClients",
+  providers: "content.pushTargetProviders",
+  user: "content.pushTargetUser",
+};
+
+function historyTargetLabel(t: (key: string) => string, target: string): string {
+  const key = TARGET_I18N_KEY[target as SendNotificationRequest["target"]];
+  return key ? t(key) : target;
+}
 
 export function NotificationsSection() {
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [target, setTarget] = useState<SendNotificationRequest["target"]>("all");
   const [userId, setUserId] = useState("");
+  const [lastRecipientsCount, setLastRecipientsCount] = useState<number | null>(null);
 
   const { data: historyData, isLoading } = useQuery({
     queryKey: ["content-notifications-history"],
@@ -24,11 +34,12 @@ export function NotificationsSection() {
 
   const sendMutation = useMutation({
     mutationFn: (payload: SendNotificationRequest) => sendNotification(payload),
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["content-notifications-history"] });
       setTitle("");
       setBody("");
       setUserId("");
+      setLastRecipientsCount(data?.recipientsCount ?? null);
     },
   });
 
@@ -49,48 +60,54 @@ export function NotificationsSection() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-mordobo-text m-0">Push Notifications</h2>
+        <h2 className="text-lg font-bold text-mordobo-text m-0">{t("content.pushTitle")}</h2>
       </div>
 
       <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
-        <h3 className="text-base font-semibold text-mordobo-text mb-4 m-0">Compose notification</h3>
+        <h3 className="text-base font-semibold text-mordobo-text mb-4 m-0">{t("content.pushCompose")}</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div className="sm:col-span-2">
             <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-              Title *
+              {t("content.pushFieldTitle")}
             </label>
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Notification title"
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setLastRecipientsCount(null);
+              }}
+              placeholder={t("content.pushTitlePlaceholder")}
               className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
             />
           </div>
           <div className="sm:col-span-2">
             <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-              Body
+              {t("content.pushFieldBody")}
             </label>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Optional message body"
+              placeholder={t("content.pushBodyPlaceholder")}
               rows={3}
               className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm resize-y"
             />
           </div>
           <div>
             <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-              Target
+              {t("content.pushFieldTarget")}
             </label>
             <select
               value={target}
-              onChange={(e) => setTarget(e.target.value as SendNotificationRequest["target"])}
+              onChange={(e) => {
+                setTarget(e.target.value as SendNotificationRequest["target"]);
+                setLastRecipientsCount(null);
+              }}
               className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
             >
-              {TARGET_OPTIONS.map(({ value: v, label }) => (
+              {TARGET_VALUES.map((v) => (
                 <option key={v} value={v}>
-                  {label}
+                  {t(TARGET_I18N_KEY[v])}
                 </option>
               ))}
             </select>
@@ -98,21 +115,26 @@ export function NotificationsSection() {
           {target === "user" && (
             <div>
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                User ID
+                {t("content.pushFieldUserId")}
               </label>
               <input
                 type="text"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                placeholder="UUID of the user"
+                placeholder={t("content.pushUserIdPlaceholder")}
                 className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
               />
             </div>
           )}
         </div>
+        {lastRecipientsCount !== null && !sendMutation.isError && (
+          <p className="text-emerald-500 dark:text-emerald-400 text-sm mb-4">
+            {t("content.pushSentTo", { count: lastRecipientsCount })}
+          </p>
+        )}
         {sendMutation.isError && (
           <p className="text-mordobo-danger text-sm mb-4">
-            {(sendMutation.error as Error)?.message ?? "Failed to send"}
+            {(sendMutation.error as Error)?.message ?? t("content.pushSendFailed")}
           </p>
         )}
         <button
@@ -121,21 +143,21 @@ export function NotificationsSection() {
           disabled={sendMutation.isPending || !title.trim()}
           className="py-2.5 px-5 bg-mordobo-accent text-white border-0 rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90 disabled:opacity-50"
         >
-          {sendMutation.isPending ? "Sending…" : "Send notification"}
+          {sendMutation.isPending ? t("content.pushSending") : t("content.pushSend")}
         </button>
       </div>
 
       <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] overflow-hidden">
         <h3 className="text-base font-semibold text-mordobo-text p-4 border-b border-mordobo-border m-0">
-          Sent notifications ({total})
+          {t("content.pushHistoryTitle", { total })}
         </h3>
         {isLoading ? (
           <div className="py-8 text-center text-mordobo-textSecondary text-sm">
-            Loading history…
+            {t("content.pushHistoryLoading")}
           </div>
         ) : items.length === 0 ? (
           <div className="py-8 text-center text-mordobo-textSecondary text-sm">
-            No notifications sent yet.
+            {t("content.pushHistoryEmpty")}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -143,13 +165,13 @@ export function NotificationsSection() {
               <thead>
                 <tr className="border-b border-mordobo-border">
                   <th className="py-3 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">
-                    Title
+                    {t("content.pushColTitle")}
                   </th>
                   <th className="py-3 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">
-                    Target
+                    {t("content.pushColTarget")}
                   </th>
                   <th className="py-3 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">
-                    Sent at
+                    {t("content.pushColSentAt")}
                   </th>
                 </tr>
               </thead>
@@ -164,9 +186,11 @@ export function NotificationsSection() {
                         </div>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-sm text-mordobo-textSecondary">{entry.target}</td>
                     <td className="py-3 px-4 text-sm text-mordobo-textSecondary">
-                      {new Date(entry.sent_at).toLocaleString()}
+                      {historyTargetLabel(t, entry.target)}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-mordobo-textSecondary">
+                      {new Date(entry.sent_at).toLocaleString(i18n.language)}
                     </td>
                   </tr>
                 ))}

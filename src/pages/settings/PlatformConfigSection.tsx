@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { getPlatformConfig, updatePlatformConfig } from "@/services/settingsService";
 import type { PlatformConfig as PlatformConfigType } from "@/types";
 import { useAuth } from "@/hooks/useAuth";
@@ -11,9 +12,12 @@ const defaultConfig: PlatformConfigType = {
   supported_cities: ["Bogotá", "Medellín", "Cali"],
   supported_languages: ["es", "en"],
   maintenance_mode: false,
+  app_version: null,
+  backoffice_version: null,
 };
 
 export function PlatformConfigSection() {
+  const { t } = useTranslation();
   const { auth } = useAuth();
   const isSuperAdmin = auth.role === "super_admin";
   const queryClient = useQueryClient();
@@ -25,6 +29,7 @@ export function PlatformConfigSection() {
   const [form, setForm] = useState<PlatformConfigType>(defaultConfig);
   const [citiesText, setCitiesText] = useState("");
   const [languagesText, setLanguagesText] = useState("");
+  const [showSavedPopup, setShowSavedPopup] = useState(false);
 
   useEffect(() => {
     if (!config) return;
@@ -37,8 +42,15 @@ export function PlatformConfigSection() {
     mutationFn: updatePlatformConfig,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["settings-platform"] });
+      setShowSavedPopup(true);
     },
   });
+
+  useEffect(() => {
+    if (!showSavedPopup) return;
+    const timeout = window.setTimeout(() => setShowSavedPopup(false), 2200);
+    return () => window.clearTimeout(timeout);
+  }, [showSavedPopup]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +65,7 @@ export function PlatformConfigSection() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12 text-mordobo-textSecondary">
-        Loading platform config…
+        {t("settings.platform.loading")}
       </div>
     );
   }
@@ -62,12 +74,26 @@ export function PlatformConfigSection() {
     return (
       <div className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6">
         <p className="text-mordobo-textSecondary">
-          Only Super Admin can view and edit platform configuration.
+          {t("settings.platform.superAdminOnly")}
         </p>
         {config && (
           <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-            <div><span className="text-mordobo-textMuted">Service fee:</span> {config.service_fee_percentage}%</div>
-            <div><span className="text-mordobo-textMuted">Maintenance:</span> {config.maintenance_mode ? "On" : "Off"}</div>
+            <div>
+              <span className="text-mordobo-textMuted">{t("settings.platform.readOnlyServiceFee")}</span>{" "}
+              {config.service_fee_percentage}%
+            </div>
+            <div>
+              <span className="text-mordobo-textMuted">{t("settings.platform.readOnlyMaintenance")}</span>{" "}
+              {config.maintenance_mode ? t("settings.platform.on") : t("settings.platform.off")}
+            </div>
+            <div>
+              <span className="text-mordobo-textMuted">{t("settings.platform.readOnlyAppVersion")}</span>{" "}
+              {config.app_version || "—"}
+            </div>
+            <div>
+              <span className="text-mordobo-textMuted">{t("settings.platform.readOnlyBackofficeVersion")}</span>{" "}
+              {config.backoffice_version || "—"}
+            </div>
           </div>
         )}
       </div>
@@ -76,11 +102,23 @@ export function PlatformConfigSection() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-bold text-mordobo-text m-0">Platform configuration</h2>
+      {showSavedPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="w-full max-w-sm bg-mordobo-card border border-mordobo-border rounded-2xl p-6 text-center">
+            <div className="mx-auto mb-3 h-12 w-12 rounded-full bg-mordobo-successDim text-mordobo-success flex items-center justify-center text-xl">
+              ✓
+            </div>
+            <p className="text-mordobo-text font-semibold m-0">{t("settings.platform.saveSuccess")}</p>
+          </div>
+        </div>
+      )}
+      <h2 className="text-lg font-bold text-mordobo-text m-0">{t("settings.platform.title")}</h2>
       <form onSubmit={handleSubmit} className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6 space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">Service fee %</label>
+            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+              {t("settings.platform.serviceFee")}
+            </label>
             <input
               type="number"
               min={0}
@@ -92,7 +130,9 @@ export function PlatformConfigSection() {
             />
           </div>
           <div>
-            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">Min job amount</label>
+            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+              {t("settings.platform.minJobAmount")}
+            </label>
             <input
               type="number"
               min={0}
@@ -102,7 +142,9 @@ export function PlatformConfigSection() {
             />
           </div>
           <div>
-            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">Max job amount</label>
+            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+              {t("settings.platform.maxJobAmount")}
+            </label>
             <input
               type="number"
               min={0}
@@ -112,28 +154,58 @@ export function PlatformConfigSection() {
             />
           </div>
         </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+              {t("settings.platform.appVersion")}
+            </label>
+            <input
+              type="text"
+              value={form.app_version ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, app_version: e.target.value }))}
+              placeholder={t("settings.platform.appVersionPlaceholder")}
+              className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+              {t("settings.platform.backofficeVersion")}
+            </label>
+            <input
+              type="text"
+              value={form.backoffice_version ?? ""}
+              onChange={(e) => setForm((f) => ({ ...f, backoffice_version: e.target.value }))}
+              placeholder={t("settings.platform.backofficeVersionPlaceholder")}
+              className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
+            />
+          </div>
+        </div>
         <div>
-          <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">Supported cities (comma-separated)</label>
+          <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+            {t("settings.platform.supportedCities")}
+          </label>
           <input
             type="text"
             value={citiesText}
             onChange={(e) => setCitiesText(e.target.value)}
-            placeholder="Bogotá, Medellín, Cali"
+            placeholder={t("settings.platform.citiesPlaceholder")}
             className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
           />
         </div>
         <div>
-          <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">Supported languages (comma-separated)</label>
+          <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
+            {t("settings.platform.supportedLanguages")}
+          </label>
           <input
             type="text"
             value={languagesText}
             onChange={(e) => setLanguagesText(e.target.value)}
-            placeholder="es, en"
+            placeholder={t("settings.platform.languagesPlaceholder")}
             className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
           />
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-mordobo-text">Maintenance mode</span>
+          <span className="text-sm text-mordobo-text">{t("settings.platform.maintenanceMode")}</span>
           <button
             type="button"
             role="switch"
@@ -149,17 +221,21 @@ export function PlatformConfigSection() {
               }`}
             />
           </button>
-          <span className="text-sm text-mordobo-textSecondary">{form.maintenance_mode ? "On" : "Off"}</span>
+          <span className="text-sm text-mordobo-textSecondary">
+            {form.maintenance_mode ? t("settings.platform.on") : t("settings.platform.off")}
+          </span>
         </div>
         {updateMutation.isError && (
-          <p className="text-mordobo-danger text-sm">{(updateMutation.error as Error)?.message ?? "Failed to save"}</p>
+          <p className="text-mordobo-danger text-sm">
+            {(updateMutation.error as Error)?.message ?? t("settings.platform.saveFailed")}
+          </p>
         )}
         <button
           type="submit"
           disabled={updateMutation.isPending}
           className="py-2.5 px-5 bg-mordobo-accent text-white border-0 rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90 disabled:opacity-50"
         >
-          {updateMutation.isPending ? "Saving…" : "Save changes"}
+          {updateMutation.isPending ? t("settings.platform.saving") : t("settings.platform.saveChanges")}
         </button>
       </form>
     </div>

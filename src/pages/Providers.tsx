@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useLayoutEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { getCategoriesTree } from "@/services/categoriesService";
@@ -6,6 +6,7 @@ import {
   fetchProviders,
   fetchProvider,
   updateProviderStatus,
+  deleteProvider,
   toggleProviderVerify,
   toggleProviderFeature,
   updateProviderCommission,
@@ -14,36 +15,29 @@ import type { ProviderListItem, ProviderDetail, ProviderListParams } from "@/typ
 import type { ServiceCatalogCategory } from "@/types";
 import { Badge } from "@/components/Badge";
 import { StatCard } from "@/components/StatCard";
-
-
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  } catch {
-    return iso;
-  }
-}
-
-function formatMoney(n: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-  }).format(n);
-}
+import { APP_VERSION } from "@/utils/appVersion";
+import {
+  buildCategoryLookup,
+  catalogItemDisplayName,
+  normalizeEnumKey,
+  prefersSpanishLanguage,
+  translateFreeformCatalogName,
+  translateJobOrderStatus,
+} from "@/utils/adminLocale";
+import { adminFormatCurrency, adminFormatDateTime } from "@/utils/localeFormat";
 
 function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" | "accent" {
-  switch (s) {
+  const n = normalizeEnumKey(s);
+  switch (n) {
     case "active":
       return "success";
     case "suspended":
+    case "banned":
       return "danger";
+    case "deleted":
+      return "info";
+    case "pending":
+      return "warning";
     case "pending_verification":
       return "warning";
     case "rejected":
@@ -53,20 +47,44 @@ function statusBadgeColor(s: string): "success" | "warning" | "danger" | "info" 
   }
 }
 
+function isProviderDeletedStatus(raw: string): boolean {
+  return normalizeEnumKey(raw) === "deleted";
+}
+
+function isProviderBannedStatus(raw: string): boolean {
+  return normalizeEnumKey(raw) === "banned";
+}
+
+function translateProviderStatus(t: (key: string, options?: { defaultValue?: string }) => string, raw: string): string {
+  const n = normalizeEnumKey(raw);
+  return t(`providers.statusLabels.${n}`, { defaultValue: raw });
+}
+
 export function Providers() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
+  const preferEs = prefersSpanishLanguage(i18n.resolvedLanguage ?? i18n.language);
+  const locale = i18n.resolvedLanguage ?? i18n.language;
+  const formatDate = useCallback((iso: string) => adminFormatDateTime(locale, iso), [locale]);
+  const formatMoney = useCallback((n: number) => adminFormatCurrency(locale, n), [locale]);
   const [filters, setFilters] = useState<ProviderListParams>({
     page: 1,
     limit: 20,
     search: "",
     status: "",
     category: "",
+    subcategory: "",
     rating: undefined,
   });
   const [detailId, setDetailId] = useState<string | null>(null);
   const [commissionModal, setCommissionModal] = useState<{ id: string; current: number | null } | null>(null);
   const [commissionInput, setCommissionInput] = useState("");
+  const [providerDeleteStep, setProviderDeleteStep] = useState<{
+    id: string;
+    name: string;
+    step: 1 | 2;
+  } | null>(null);
+  const [providerDeleteTypeConfirm, setProviderDeleteTypeConfirm] = useState("");
 
   const { data: categories = [] } = useQuery({
     queryKey: ["admin-categories-tree"],
@@ -75,21 +93,56 @@ export function Providers() {
 
   const { data: listData, isLoading: listLoading } = useQuery({
     queryKey: ["providers-list", filters],
-    queryFn: () => fetchProviders(filters),
+    // Read filters from queryKey to avoid any stale-closure mismatches.
+    queryFn: ({ queryKey }) => fetchProviders(queryKey[1] as ProviderListParams),
   });
 
-  const { data: detail, isLoading: detailLoading } = useQuery({
+  const {
+    data: detail,
+    isPending: detailPending,
+    isFetching: detailFetching,
+  } = useQuery({
     queryKey: ["provider-detail", detailId],
-    queryFn: () => (detailId ? fetchProvider(detailId) : Promise.resolve(null)),
+    // Read id from queryKey (not closure) so the response always maps to the open provider when switching quickly.
+    queryFn: ({ queryKey, signal }) => {
+      const id = queryKey[1] as string | null;
+      if (!id) return Promise.resolve(null);
+      return fetchProvider(id, signal);
+    },
     enabled: !!detailId,
   });
 
+  const detailSafe =
+    detail && detailId && detail.profile.id === detailId ? detail : null;
+  const detailIdMismatch = Boolean(detail && detailId && detail.profile.id !== detailId);
+
+  useLayoutEffect(() => {
+    if (!detailId || !detail || !detailIdMismatch) return;
+    queryClient.removeQueries({ queryKey: ["provider-detail", detailId] });
+  }, [detailId, detail, detailIdMismatch, queryClient]);
+
+  const detailLoading =
+    Boolean(detailId) &&
+    !detailSafe &&
+    (detailIdMismatch || detailPending || detailFetching);
+
   const statusMutation = useMutation({
-    mutationFn: ({ id, status }: { id: string; status: "active" | "suspended" }) =>
+    mutationFn: ({ id, status }: { id: string; status: "active" | "suspended" | "banned" }) =>
       updateProviderStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["providers-list"] });
       if (detailId) queryClient.invalidateQueries({ queryKey: ["provider-detail", detailId] });
+    },
+  });
+
+  const deleteProviderMutation = useMutation({
+    mutationFn: (id: string) => deleteProvider(id),
+    onSuccess: (_data, deletedId) => {
+      setProviderDeleteStep(null);
+      setProviderDeleteTypeConfirm("");
+      setDetailId(null);
+      queryClient.invalidateQueries({ queryKey: ["providers-list"] });
+      queryClient.invalidateQueries({ queryKey: ["provider-detail", deletedId] });
     },
   });
 
@@ -126,22 +179,64 @@ export function Providers() {
   const limit = listData?.limit ?? 20;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
-  const flatCategoryOptions: { value: string; label: string }[] = [];
-  categories.forEach((c: ServiceCatalogCategory) => {
-    flatCategoryOptions.push({ value: c.id, label: `${c.name ?? c.name_en ?? c.id} (category)` });
-    (c.subcategories ?? []).forEach((s) => {
-      flatCategoryOptions.push({ value: s.id, label: `  ${s.name ?? s.name_en ?? s.id}` });
+  const { rowCategoryDisplay } = useMemo(
+    () => buildCategoryLookup(categories ?? [], preferEs, t),
+    [categories, preferEs, t]
+  );
+
+  const categoryFilterOptions: { value: string; label: string }[] = [];
+  // Category filter should only show parent categories (NOT subcategories).
+  (categories ?? []).forEach((c: ServiceCatalogCategory) => {
+    if (!c?.id) return;
+    const display = catalogItemDisplayName(t, c, preferEs) || String(c.id);
+    categoryFilterOptions.push({
+      value: String(c.id),
+      label: t("providers.filterOptionParentCategory", { name: display }),
     });
   });
+
+  const subcategoryFilterOptions = useMemo(() => {
+    // Subcategory dropdown is dependent on the selected category.
+    if (!filters.category) return [];
+    const out: { value: string; label: string; parentId: string }[] = [];
+    const seen = new Set<string>();
+    (categories ?? []).forEach((c: ServiceCatalogCategory) => {
+      if (!c?.id) return;
+      const parentId = String(c.id);
+      (c.subcategories ?? []).forEach((s) => {
+        if (!s?.id) return;
+        if (parentId !== filters.category) return;
+        if (seen.has(String(s.id))) return;
+        seen.add(String(s.id));
+        const subLabel = catalogItemDisplayName(t, s, preferEs) || String(s.id);
+        out.push({
+          value: String(s.id),
+          parentId,
+          label: t("providers.subcategoryFilterLabel", { name: subLabel }),
+        });
+      });
+    });
+    return out;
+  }, [categories, filters.category, preferEs, t]);
 
   const statusOptions = [
     { value: "", label: t("providers.activeOnly") },
     { value: "all", label: t("providers.allStatuses") },
     { value: "active", label: t("common.active") },
     { value: "suspended", label: t("users.suspended") },
+    { value: "banned", label: t("users.banned") },
+    { value: "deleted", label: t("users.deleted") },
+    { value: "pending_all", label: t("providers.pendingAll") },
+    { value: "pending", label: t("providers.pendingOnboarding") },
     { value: "pending_verification", label: t("providers.pendingVerification") },
     { value: "rejected", label: t("providers.rejected") },
   ];
+
+  const handleProviderDeleteConfirm = useCallback(() => {
+    if (!providerDeleteStep || providerDeleteStep.step !== 2) return;
+    if (providerDeleteTypeConfirm.trim().toLowerCase() !== "delete") return;
+    deleteProviderMutation.mutate(providerDeleteStep.id);
+  }, [providerDeleteStep, providerDeleteTypeConfirm, deleteProviderMutation]);
 
   const handleCommissionSubmit = useCallback(() => {
     if (!commissionModal) return;
@@ -183,13 +278,34 @@ export function Providers() {
           </select>
           <select
             value={filters.category ?? ""}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, category: e.target.value || undefined, page: 1 }))
-            }
+            onChange={(e) => {
+              const v = e.target.value;
+              setFilters((f) => {
+                const nextCat = v === "" ? undefined : v;
+                // Mutual exclusivity: choosing category clears subcategory.
+                return { ...f, category: nextCat, subcategory: undefined, page: 1 };
+              });
+            }}
             className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[180px]"
           >
             <option value="">{t("providers.allCategories")}</option>
-            {flatCategoryOptions.map((opt) => (
+            {categoryFilterOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filters.subcategory ?? ""}
+            onChange={(e) => {
+              const v = e.target.value;
+              setFilters((f) => ({ ...f, subcategory: v === "" ? undefined : v, page: 1 }));
+            }}
+            disabled={!filters.category}
+            className="rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none min-w-[200px] disabled:opacity-50"
+          >
+            <option value="">{t("providers.allSubcategories")}</option>
+            {subcategoryFilterOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
                 {opt.label}
               </option>
@@ -209,7 +325,7 @@ export function Providers() {
                 page: 1,
               }))
             }
-            className="w-24 rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none"
+            className="min-w-[148px] w-[148px] shrink-0 rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none"
           />
         </div>
 
@@ -223,9 +339,10 @@ export function Providers() {
                   <tr className="border-b border-mordobo-border text-left text-mordobo-textSecondary">
                     <th className="pb-3 pr-4 font-medium">{t("users.id")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("users.name")}</th>
-                    <th className="pb-3 pr-4 font-medium">{t("providers.serviceCategory")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("providers.parentCategoryColumn")}</th>
+                    <th className="pb-3 pr-4 font-medium">{t("providers.subcategoryColumn")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("users.location")}</th>
-                    <th className="pb-3 pr-4 font-medium text-right">Rating</th>
+                    <th className="pb-3 pr-4 font-medium text-right">{t("providers.ratingColumn")}</th>
                     <th className="pb-3 pr-4 font-medium text-right">{t("providers.totalJobs")}</th>
                     <th className="pb-3 pr-4 font-medium text-right">{t("reports.earnings")}</th>
                     <th className="pb-3 pr-4 font-medium">{t("common.status")}</th>
@@ -233,7 +350,14 @@ export function Providers() {
                   </tr>
                 </thead>
                 <tbody>
-                  {providers.map((p: ProviderListItem) => (
+                  {providers.map((p: ProviderListItem) => {
+                    const { parent: catParent, sub: catSub } = rowCategoryDisplay(
+                      p.service_category_id,
+                      p.parent_category_name,
+                      p.subcategory_name
+                    );
+                    const statusNorm = normalizeEnumKey(p.status);
+                    return (
                     <tr
                       key={p.id}
                       className="border-b border-mordobo-border last:border-0 hover:bg-mordobo-surfaceHover/30"
@@ -243,7 +367,10 @@ export function Providers() {
                       </td>
                       <td className="py-3 pr-4 text-mordobo-text">{p.name || p.email}</td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">
-                        {p.service_category ?? "—"}
+                        {catParent}
+                      </td>
+                      <td className="py-3 pr-4 text-mordobo-textSecondary">
+                        {catSub}
                       </td>
                       <td className="py-3 pr-4 text-mordobo-textSecondary">{p.location ?? "—"}</td>
                       <td className="py-3 pr-4 text-right text-mordobo-text">
@@ -255,14 +382,14 @@ export function Providers() {
                       </td>
                       <td className="py-3 pr-4">
                         <div className="flex flex-wrap gap-1 items-center">
-                          <Badge color={statusBadgeColor(p.status)}>{p.status}</Badge>
+                          <Badge color={statusBadgeColor(p.status)}>{translateProviderStatus(t, p.status)}</Badge>
                           {p.verified && (
-                            <span className="text-xs text-mordobo-accentLight" title="Verified">
+                            <span className="text-xs text-mordobo-accentLight" title={t("providers.verifiedBadgeTitle")}>
                               ✓
                             </span>
                           )}
                           {p.is_featured && (
-                            <span className="text-xs text-mordobo-warning" title="Featured">
+                            <span className="text-xs text-mordobo-warning" title={t("providers.featuredBadgeTitle")}>
                               ★
                             </span>
                           )}
@@ -282,13 +409,44 @@ export function Providers() {
                             onClick={() =>
                               statusMutation.mutate({
                                 id: p.id,
-                                status: p.status === "suspended" ? "active" : "suspended",
+                                status: statusNorm === "suspended" ? "active" : "suspended",
                               })
                             }
-                            disabled={statusMutation.isPending}
+                            disabled={
+                              statusMutation.isPending ||
+                              isProviderDeletedStatus(p.status) ||
+                              isProviderBannedStatus(p.status)
+                            }
                             className="text-mordobo-warning text-xs font-medium hover:underline disabled:opacity-50"
                           >
-                            {p.status === "suspended" ? t("providers.activate") : t("providers.suspend")}
+                            {statusNorm === "suspended" ? t("providers.activate") : t("providers.suspend")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              statusMutation.mutate({
+                                id: p.id,
+                                status: isProviderBannedStatus(p.status) ? "active" : "banned",
+                              })
+                            }
+                            disabled={statusMutation.isPending || isProviderDeletedStatus(p.status)}
+                            className="text-mordobo-danger text-xs font-medium hover:underline disabled:opacity-50"
+                          >
+                            {isProviderBannedStatus(p.status) ? t("providers.unban") : t("providers.ban")}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setProviderDeleteStep({
+                                id: p.id,
+                                name: p.name || p.email || p.id,
+                                step: 1,
+                              })
+                            }
+                            disabled={isProviderDeletedStatus(p.status)}
+                            className="text-mordobo-textSecondary text-xs font-medium hover:underline disabled:opacity-50"
+                          >
+                            {t("providers.deleteProvider")}
                           </button>
                           <button
                             type="button"
@@ -321,7 +479,8 @@ export function Providers() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -365,27 +524,48 @@ export function Providers() {
           <h2 className="text-lg font-semibold text-mordobo-text mb-4">{t("providers.providerDetail")}</h2>
           {detailLoading ? (
             <p className="text-mordobo-textSecondary">{t("common.loading")}</p>
-          ) : detail ? (
+          ) : detailSafe ? (
             <ProviderDetailPanel
-              detail={detail}
+              detail={detailSafe}
+              rowCategoryDisplay={rowCategoryDisplay}
+              formatDate={formatDate}
+              formatMoney={formatMoney}
               onClose={() => setDetailId(null)}
-              onStatusChange={() =>
+              onSuspendToggle={() => {
+                const s = normalizeEnumKey(detailSafe.profile.status);
                 statusMutation.mutate({
-                  id: detail.profile.id,
-                  status:
-                    detail.profile.status === "suspended" ? "active" : "suspended",
+                  id: detailSafe.profile.id,
+                  status: s === "suspended" ? "active" : "suspended",
+                });
+              }}
+              onBanToggle={() => {
+                const s = normalizeEnumKey(detailSafe.profile.status);
+                statusMutation.mutate({
+                  id: detailSafe.profile.id,
+                  status: s === "banned" ? "active" : "banned",
+                });
+              }}
+              onDelete={() =>
+                setProviderDeleteStep({
+                  id: detailSafe.profile.id,
+                  name:
+                    detailSafe.profile.business_name?.trim() ||
+                    detailSafe.profile.full_name ||
+                    detailSafe.profile.email ||
+                    detailSafe.profile.id,
+                  step: 1,
                 })
               }
-              onVerify={() => verifyMutation.mutate(detail.profile.id)}
-              onFeature={() => featureMutation.mutate(detail.profile.id)}
+              onVerify={() => verifyMutation.mutate(detailSafe.profile.id)}
+              onFeature={() => featureMutation.mutate(detailSafe.profile.id)}
               onEditCommission={() => {
                 setCommissionModal({
-                  id: detail.profile.id,
-                  current: detail.profile.commission_rate,
+                  id: detailSafe.profile.id,
+                  current: detailSafe.profile.commission_rate,
                 });
                 setCommissionInput(
-                  detail.profile.commission_rate != null
-                    ? String(detail.profile.commission_rate)
+                  detailSafe.profile.commission_rate != null
+                    ? String(detailSafe.profile.commission_rate)
                     : ""
                 );
               }}
@@ -443,14 +623,106 @@ export function Providers() {
           </div>
         </div>
       )}
+
+      {providerDeleteStep && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          onClick={() => {
+            if (!deleteProviderMutation.isPending) {
+              setProviderDeleteStep(null);
+              setProviderDeleteTypeConfirm("");
+            }
+          }}
+        >
+          <div
+            className="bg-mordobo-card border border-mordobo-border rounded-[14px] p-6 shadow-xl max-w-sm w-full mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {providerDeleteStep.step === 1 ? (
+              <>
+                <h3 className="text-lg font-semibold text-mordobo-text mb-2">
+                  {t("providers.deleteProviderConfirm")}
+                </h3>
+                <p className="text-sm text-mordobo-textSecondary mb-4">
+                  {t("providers.deleteProviderMessage")}
+                </p>
+                <p className="text-sm text-mordobo-text mb-4 font-medium">{providerDeleteStep.name}</p>
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setProviderDeleteStep(null)}
+                    className="rounded-xl border border-mordobo-border px-4 py-2 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setProviderDeleteStep((s) => (s ? { ...s, step: 2 } : null))
+                    }
+                    className="rounded-xl bg-mordobo-warning text-white px-4 py-2 text-sm font-medium hover:opacity-90"
+                  >
+                    {t("users.continue")}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3 className="text-lg font-semibold text-mordobo-danger mb-2">{t("users.doubleConfirmation")}</h3>
+                <p className="text-sm text-mordobo-textSecondary mb-2">
+                  {t("users.typeDeleteToConfirm", { name: providerDeleteStep.name })}
+                </p>
+                <input
+                  type="text"
+                  placeholder={t("users.typeDeletePlaceholder")}
+                  value={providerDeleteTypeConfirm}
+                  onChange={(e) => setProviderDeleteTypeConfirm(e.target.value)}
+                  className="w-full rounded-xl border border-mordobo-border bg-mordobo-surface px-3 py-2 text-sm text-mordobo-text focus:border-mordobo-accent focus:outline-none mb-4"
+                />
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProviderDeleteStep((s) => (s ? { ...s, step: 1 } : null));
+                      setProviderDeleteTypeConfirm("");
+                    }}
+                    disabled={deleteProviderMutation.isPending}
+                    className="rounded-xl border border-mordobo-border px-4 py-2 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
+                  >
+                    {t("users.back")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleProviderDeleteConfirm}
+                    disabled={
+                      deleteProviderMutation.isPending ||
+                      providerDeleteTypeConfirm.trim().toLowerCase() !== "delete"
+                    }
+                    className="rounded-xl bg-mordobo-danger text-white px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+                  >
+                    {deleteProviderMutation.isPending
+                      ? t("providers.deletingProvider")
+                      : t("providers.deleteProvider")}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function ProviderDetailPanel({
   detail,
+  rowCategoryDisplay,
+  formatDate,
+  formatMoney,
   onClose,
-  onStatusChange,
+  onSuspendToggle,
+  onBanToggle,
+  onDelete,
   onVerify,
   onFeature,
   onEditCommission,
@@ -459,8 +731,17 @@ function ProviderDetailPanel({
   featureMutationPending,
 }: {
   detail: ProviderDetail;
+  rowCategoryDisplay: (
+    serviceCategoryId: string | null | undefined,
+    fallbackParent: string | null | undefined,
+    fallbackSub: string | null | undefined
+  ) => { parent: string; sub: string };
+  formatDate: (iso: string) => string;
+  formatMoney: (n: number) => string;
   onClose: () => void;
-  onStatusChange: () => void;
+  onSuspendToggle: () => void;
+  onBanToggle: () => void;
+  onDelete: () => void;
   onVerify: () => void;
   onFeature: () => void;
   onEditCommission: () => void;
@@ -471,9 +752,21 @@ function ProviderDetailPanel({
   const { t } = useTranslation();
   const { profile, services, job_history, reviews, documents, earnings_breakdown } = detail;
   const name = profile.business_name?.trim() || profile.full_name || profile.email || "—";
+  const { parent: detailCatParent, sub: detailCatSub } = rowCategoryDisplay(
+    profile.service_category_id,
+    profile.parent_category_name,
+    profile.subcategory_name
+  );
+  const profileStatusNorm = normalizeEnumKey(profile.status);
+  const providerDeleted = isProviderDeletedStatus(profile.status);
 
   return (
     <div className="space-y-6">
+      {providerDeleted && (
+        <p className="text-sm text-mordobo-warning border border-mordobo-warning/40 rounded-xl px-3 py-2 bg-mordobo-warning/10">
+          {t("users.accountDeletedHint")}
+        </p>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           {profile.profile_image_url && (
@@ -484,11 +777,14 @@ function ProviderDetailPanel({
             />
           )}
           <div>
-            <h3 className="text-lg font-semibold text-mordobo-text">{name}</h3>
+            <div className="flex items-baseline gap-2">
+              <h3 className="text-lg font-semibold text-mordobo-text">{name}</h3>
+              <span className="text-[11px] text-mordobo-textMuted tracking-widest">v{APP_VERSION}</span>
+            </div>
             <p className="text-sm text-mordobo-textSecondary">{profile.email}</p>
             <p className="text-sm text-mordobo-textSecondary">{profile.phone_number ?? "—"}</p>
             <div className="flex flex-wrap gap-2 mt-2">
-              <Badge color={statusBadgeColor(profile.status)}>{profile.status}</Badge>
+              <Badge color={statusBadgeColor(profile.status)}>{translateProviderStatus(t, profile.status)}</Badge>
               {profile.verified && <Badge color="accent">{t("providers.verified")}</Badge>}
               {profile.is_featured && <Badge color="warning">{t("providers.featured")}</Badge>}
             </div>
@@ -506,16 +802,37 @@ function ProviderDetailPanel({
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={onStatusChange}
-          disabled={statusMutationPending}
+          onClick={onSuspendToggle}
+          disabled={
+            statusMutationPending ||
+            providerDeleted ||
+            profileStatusNorm === "banned"
+          }
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
-          {profile.status === "suspended" ? t("providers.activate") : t("providers.suspend")}
+          {profileStatusNorm === "suspended" ? t("providers.activate") : t("providers.suspend")}
         </button>
         <button
           type="button"
+          onClick={onBanToggle}
+          disabled={statusMutationPending || providerDeleted}
+          className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
+        >
+          {profileStatusNorm === "banned" ? t("providers.unban") : t("providers.ban")}
+        </button>
+        {!providerDeleted && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="rounded-xl border border-mordobo-danger/50 bg-mordobo-danger/10 px-3 py-1.5 text-sm text-mordobo-danger hover:bg-mordobo-danger/20"
+          >
+            {t("providers.deleteProvider")}
+          </button>
+        )}
+        <button
+          type="button"
           onClick={onVerify}
-          disabled={verifyMutationPending}
+          disabled={verifyMutationPending || providerDeleted}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
           {profile.verified ? t("providers.unverify") : t("providers.verify")}
@@ -523,7 +840,7 @@ function ProviderDetailPanel({
         <button
           type="button"
           onClick={onFeature}
-          disabled={featureMutationPending}
+          disabled={featureMutationPending || providerDeleted}
           className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
           {profile.is_featured ? t("providers.unfeature") : t("providers.feature")}
@@ -531,7 +848,8 @@ function ProviderDetailPanel({
         <button
           type="button"
           onClick={onEditCommission}
-          className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover"
+          disabled={providerDeleted}
+          className="rounded-xl border border-mordobo-border bg-mordobo-card px-3 py-1.5 text-sm text-mordobo-text hover:bg-mordobo-surfaceHover disabled:opacity-50"
         >
           {profile.commission_rate != null ? `${t("providers.commission")} (${(profile.commission_rate * 100).toFixed(0)}%)` : t("providers.editCommissionDefault")}
         </button>
@@ -561,8 +879,8 @@ function ProviderDetailPanel({
       <section>
         <h4 className="text-sm font-semibold text-mordobo-text mb-2">{t("providers.profile")}</h4>
         <p className="text-sm text-mordobo-textSecondary">
-          {profile.bio || t("providers.noBio")} · {t("users.location")}: {profile.location ?? "—"} · {t("providers.serviceCategory")}:{" "}
-          {profile.service_category ?? "—"}
+          {profile.bio || t("providers.noBio")} · {t("users.location")}: {profile.location ?? "—"} · {t("providers.parentCategoryColumn")}:{" "}
+          {detailCatParent} · {t("providers.subcategoryColumn")}: {detailCatSub}
         </p>
         {profile.hourly_rate != null && (
           <p className="text-sm text-mordobo-textSecondary">{t("providers.hourlyRate")} {formatMoney(profile.hourly_rate)}</p>
@@ -578,7 +896,7 @@ function ProviderDetailPanel({
             {services.map((svc) => (
               <li key={svc.id}>
                 {svc.name} {svc.price != null ? `— ${formatMoney(svc.price)}` : ""}
-                {svc.category_name ? ` (${svc.category_name})` : ""}
+                {svc.category_name ? ` (${translateFreeformCatalogName(t, svc.category_name)})` : ""}
               </li>
             ))}
           </ul>
@@ -603,11 +921,15 @@ function ProviderDetailPanel({
               <tbody>
                 {job_history.slice(0, 20).map((j) => (
                   <tr key={j.id} className="border-b border-mordobo-border/50">
-                    <td className="py-1.5 pr-2 text-mordobo-text">{formatDate(j.created_at)}</td>
+                    <td className="py-1.5 pr-2 text-mordobo-text">{formatDate(j.activity_at ?? j.scheduled_at ?? j.created_at)}</td>
                     <td className="py-1.5 pr-2 text-mordobo-textSecondary">{j.service_name ?? "—"}</td>
-                    <td className="py-1.5 pr-2">{j.order_status}</td>
+                    <td className="py-1.5 pr-2">{translateJobOrderStatus(t, j.order_status)}</td>
                     <td className="py-1.5 text-right text-mordobo-text">
-                      {j.payment_amount != null ? formatMoney(j.payment_amount) : "—"}
+                      {j.payment_amount != null
+                        ? formatMoney(j.payment_amount)
+                        : j.total_amount != null
+                          ? formatMoney(j.total_amount)
+                          : "—"}
                     </td>
                   </tr>
                 ))}
@@ -627,7 +949,7 @@ function ProviderDetailPanel({
               <li key={r.id} className="text-sm border-b border-mordobo-border/50 pb-2">
                 <span className="text-mordobo-text">{r.rating}★</span>{" "}
                 <span className="text-mordobo-textSecondary">{r.comment ?? "—"}</span> —{" "}
-                <span className="text-mordobo-textMuted">{r.client_name ?? "Client"}</span> ·{" "}
+                <span className="text-mordobo-textMuted">{r.client_name ?? t("providers.client")}</span> ·{" "}
                 {formatDate(r.created_at)}
               </li>
             ))}

@@ -28,6 +28,18 @@ export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
   user: User;
+  /** When true (backoffice admin), the UI must prompt for a new password before normal use. */
+  requires_password_change?: boolean;
+}
+
+/** After login with a temporary password; caller must complete password change then persist auth. */
+export interface LoginPasswordChangePayload {
+  requiresPasswordChange: true;
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+  resolvedRole: Role;
+  currentPassword: string;
 }
 
 /** Cuando el usuario tiene 2FA activado, el login devuelve esto en lugar de tokens. */
@@ -174,12 +186,15 @@ export interface AdminUserSettings {
   last_login_at?: string | null;
   created_at: string;
   updated_at: string;
+  must_change_password?: boolean;
 }
 
 export interface InviteAdminRequest {
   email: string;
   role: Role;
   full_name?: string;
+  /** Temporary password for the new admin (min 8 chars); they must change it after first login. */
+  password: string;
 }
 
 export interface UpdateAdminRequest {
@@ -194,6 +209,8 @@ export interface PlatformConfig {
   supported_cities: string[];
   supported_languages: string[];
   maintenance_mode: boolean;
+  app_version?: string | null;
+  backoffice_version?: string | null;
 }
 
 export interface EmailTemplate {
@@ -214,12 +231,19 @@ export interface AuditLogEntry {
   action_type: string;
   resource_type: string | null;
   resource_id: string | null;
+  /** Friendly label for the affected resource (e.g. client full name). May be null if resource was deleted or unknown. */
+  resource_label?: string | null;
+  /** Optional secondary identifier for the resource (e.g. client email). */
+  resource_email?: string | null;
   details: Record<string, unknown> | null;
   created_at: string;
 }
 
 // --- Content Management (CMS) ---
 export type ContentStatus = "published" | "draft";
+
+/** FAQ visibility: which app(s) see the category or question in Help Center. */
+export type FaqAudience = "client" | "provider" | "all";
 
 export interface FaqAnswer {
   id: string;
@@ -239,6 +263,7 @@ export interface FaqQuestion {
   question_es?: string;
   status?: ContentStatus;
   order?: number;
+  audience?: FaqAudience;
   answers?: FaqAnswer[];
   created_at?: string;
   updated_at?: string;
@@ -246,10 +271,12 @@ export interface FaqQuestion {
 
 export interface FaqCategory {
   id: string;
+  slug?: string;
   title_en?: string;
   title_es?: string;
   status?: ContentStatus;
   order?: number;
+  audience?: FaqAudience;
   questions?: FaqQuestion[];
   created_at?: string;
   updated_at?: string;
@@ -341,7 +368,7 @@ export interface TopProviderRow {
 }
 
 // --- Transactions (Backoffice) ---
-export type TransactionStatus = "completed" | "pending" | "refunded" | "failed";
+export type TransactionStatus = "completed" | "pending" | "refunded" | "failed" | "cancelled";
 
 export interface TransactionListItem {
   id: string;
@@ -403,6 +430,10 @@ export interface ProviderListItem {
   email: string;
   service_category: string | null;
   service_category_id: string | null;
+  /** Parent category name (from catalog join); absent on older API responses */
+  parent_category_name?: string | null;
+  /** Subcategory name (from catalog join, or legacy text when no service_category_id) */
+  subcategory_name?: string | null;
   location: string | null;
   rating: number;
   total_reviews: number;
@@ -421,6 +452,7 @@ export interface ProviderListParams {
   search?: string;
   status?: string;
   category?: string;
+  subcategory?: string;
   rating?: number;
 }
 
@@ -432,6 +464,8 @@ export interface ProviderProfile {
   phone_number: string | null;
   service_category: string | null;
   service_category_id: string | null;
+  parent_category_name?: string | null;
+  subcategory_name?: string | null;
   bio: string | null;
   location: string | null;
   latitude: number | null;
@@ -470,6 +504,9 @@ export interface ProviderJobHistoryItem {
   payment_amount: number | null;
   payment_status: string | null;
   service_name: string | null;
+  scheduled_at: string | null;
+  activity_at: string;
+  review_created_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -555,7 +592,7 @@ export interface ReorderPayload {
 }
 
 // --- Users Management (Backoffice client accounts) ---
-export type ClientAccountStatus = "active" | "suspended" | "banned" | "pending";
+export type ClientAccountStatus = "active" | "suspended" | "banned" | "pending" | "deleted";
 
 export interface ClientListItem {
   id: string;
@@ -565,6 +602,8 @@ export interface ClientListItem {
   location: string | null;
   registration_date: string;
   status: string;
+  /** Set when account was soft-deleted (status should be `deleted`) */
+  deleted_at?: string | null;
 }
 
 export interface ClientListParams {
@@ -585,6 +624,7 @@ export interface ClientProfile {
   country: string | null;
   profile_image: string | null;
   status: string;
+  deleted_at?: string | null;
   created_at: string;
   updated_at: string | null;
   date_of_birth: string | null;
@@ -596,6 +636,8 @@ export interface ClientBookingItem {
   order_status: string;
   total_amount: number | null;
   scheduled_at: string | null;
+  activity_at: string;
+  review_created_at: string | null;
   created_at: string;
   updated_at: string;
   service_name: string | null;

@@ -3,25 +3,23 @@ import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { NAV_ITEMS } from "@/utils/constants";
 import { useState } from "react";
+import { GlobalSearch } from "@/components/GlobalSearch";
 
 interface HeaderProps {
   onMenuClick?: () => void;
-}
-
-/** Normalized check: i18n can return "es", "es-ES", etc. */
-function isSpanish(lng: string | undefined): boolean {
-  return (lng ?? "").startsWith("es");
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { t, i18n } = useTranslation();
   const location = useLocation();
   const { logout } = useAuth();
-  const [search, setSearch] = useState("");
   const [notificationsCount] = useState(0);
 
-  const currentLngIsSpanish = isSpanish(i18n.language);
-  const toggleLanguage = () => i18n.changeLanguage(currentLngIsSpanish ? "en" : "es");
+  const lng = (i18n.resolvedLanguage ?? i18n.language ?? "en").toLowerCase();
+  const esActive = lng.startsWith("es");
+  const handleLanguageSelect = (lng: "en" | "es") => {
+    void i18n.changeLanguage(lng);
+  };
 
   const current = NAV_ITEMS.find((n) => n.path === location.pathname || (n.path !== "/" && location.pathname.startsWith(n.path)));
   const title = current ? `${current.icon} ${t(`nav.${current.id}`)}` : `Mordobo ${t("nav.backoffice")}`;
@@ -47,24 +45,37 @@ export function Header({ onMenuClick }: HeaderProps) {
               {notificationsCount}
             </span>
           </button>
-          <input
-            type="search"
-            placeholder={t("nav.searchPlaceholder")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="py-2 px-4 w-[280px] bg-mordobo-bg border border-mordobo-border rounded-lg text-sm text-mordobo-text placeholder:text-mordobo-textMuted focus:outline-none focus:ring-2 focus:ring-mordobo-accent/50"
-          />
+          <GlobalSearch />
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            className="text-xs font-medium text-mordobo-textMuted hover:text-mordobo-text px-2 py-1 rounded border border-mordobo-border hover:border-mordobo-accent/50"
-            title={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
-            aria-label={currentLngIsSpanish ? t("nav.switchToEn") : t("nav.switchToEs")}
-          >
-            {currentLngIsSpanish ? "EN" : "ES"}
-          </button>
+          <div className="flex items-center rounded border border-mordobo-border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => handleLanguageSelect("en")}
+              className={`text-xs font-medium px-2 py-1 transition-colors ${
+                !esActive
+                  ? "bg-mordobo-accent text-white"
+                  : "text-mordobo-textMuted hover:text-mordobo-text"
+              }`}
+              title={t("nav.switchToEn")}
+              aria-label={t("nav.switchToEn")}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              onClick={() => handleLanguageSelect("es")}
+              className={`text-xs font-medium px-2 py-1 transition-colors ${
+                esActive
+                  ? "bg-mordobo-accent text-white"
+                  : "text-mordobo-textMuted hover:text-mordobo-text"
+              }`}
+              title={t("nav.switchToEs")}
+              aria-label={t("nav.switchToEs")}
+            >
+              ES
+            </button>
+          </div>
           <button
             type="button"
             onClick={logout}

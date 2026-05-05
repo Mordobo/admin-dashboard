@@ -6,14 +6,15 @@ import { Badge } from "@/components/Badge";
 import type { Banner, ContentStatus } from "@/types";
 
 const STATUS_OPTIONS: ContentStatus[] = ["draft", "published"];
-const STATUS_LABELS: Record<ContentStatus, string> = { draft: "Draft", published: "Published" };
 const STATUS_COLORS: Record<ContentStatus, "warning" | "success"> = {
   draft: "warning",
   published: "success",
 };
 
 export function BannersSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const statusLabel = (s: ContentStatus) =>
+    s === "draft" ? t("content.statusDraft") : t("content.statusPublished");
   const queryClient = useQueryClient();
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -103,7 +104,7 @@ export function BannersSection() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12 text-mordobo-textSecondary">
-        Loading banners…
+        {t("content.bannersLoading")}
       </div>
     );
   }
@@ -111,7 +112,7 @@ export function BannersSection() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-lg font-bold text-mordobo-text m-0">Banners & Promotions</h2>
+        <h2 className="text-lg font-bold text-mordobo-text m-0">{t("content.bannersSectionHeading")}</h2>
         <button
           type="button"
           onClick={() => {
@@ -121,7 +122,7 @@ export function BannersSection() {
           }}
           className="py-2.5 px-5 bg-mordobo-accent text-white border-0 rounded-xl text-sm font-semibold cursor-pointer hover:opacity-90"
         >
-          Add banner
+          {t("content.addBanner")}
         </button>
       </div>
 
@@ -133,19 +134,19 @@ export function BannersSection() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                Title
+                {t("content.bannerTitle")}
               </label>
               <input
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Banner title"
+                placeholder={t("content.bannerTitlePlaceholder")}
                 className="w-full py-2.5 px-3.5 bg-mordobo-surface border border-mordobo-border rounded-xl text-mordobo-text text-sm"
               />
             </div>
             <div>
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                Status
+                {t("common.status")}
               </label>
               <select
                 value={status}
@@ -154,14 +155,14 @@ export function BannersSection() {
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
-                    {STATUS_LABELS[s]}
+                    {statusLabel(s)}
                   </option>
                 ))}
               </select>
             </div>
             <div className="sm:col-span-2">
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                Image URL
+                {t("content.bannerImageUrl")}
               </label>
               <input
                 type="url"
@@ -173,7 +174,7 @@ export function BannersSection() {
             </div>
             <div className="sm:col-span-2">
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                Link URL (optional)
+                {t("content.bannerLinkUrl")}
               </label>
               <input
                 type="url"
@@ -185,7 +186,7 @@ export function BannersSection() {
             </div>
             <div>
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                Order
+                {t("content.bannerOrder")}
               </label>
               <input
                 type="number"
@@ -197,7 +198,7 @@ export function BannersSection() {
             </div>
             <div>
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                Start at (optional)
+                {t("content.bannerStartAt")}
               </label>
               <input
                 type="datetime-local"
@@ -208,7 +209,7 @@ export function BannersSection() {
             </div>
             <div>
               <label className="block text-[11px] text-mordobo-textMuted uppercase tracking-wider mb-1.5">
-                End at (optional)
+                {t("content.bannerEndAt")}
               </label>
               <input
                 type="datetime-local"
@@ -221,7 +222,7 @@ export function BannersSection() {
           {(createMutation.isError || updateMutation.isError) && (
             <p className="text-mordobo-danger text-sm mb-4">
               {((createMutation.error ?? updateMutation.error) as Error)?.message ??
-                "Failed to save"}
+                t("content.bannerSaveFailed")}
             </p>
           )}
           <div className="flex gap-3">
@@ -234,7 +235,7 @@ export function BannersSection() {
               }}
               className="py-2.5 px-5 bg-mordobo-surface border border-mordobo-border rounded-xl text-sm font-semibold text-mordobo-text cursor-pointer hover:bg-mordobo-surfaceHover"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               type="button"
@@ -244,11 +245,11 @@ export function BannersSection() {
             >
               {editingId
                 ? updateMutation.isPending
-                  ? "Saving…"
-                  : "Save"
+                  ? t("content.bannerSaving")
+                  : t("common.save")
                 : createMutation.isPending
-                  ? "Creating…"
-                  : "Create banner"}
+                  ? t("content.bannerCreating")
+                  : t("content.bannerCreate")}
             </button>
           </div>
         </div>
@@ -260,22 +261,22 @@ export function BannersSection() {
             <thead>
               <tr className="border-b border-mordobo-border">
                 <th className="py-3 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">
-                  Preview
+                  {t("content.bannersColPreview")}
                 </th>
                 <th className="py-3 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">
-                  Title
+                  {t("content.bannersColTitle")}
                 </th>
                 <th className="py-3 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">
-                  Status
+                  {t("common.status")}
                 </th>
                 <th className="py-3 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">
-                  Order
+                  {t("content.bannersColOrder")}
                 </th>
                 <th className="py-3 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">
-                  Period
+                  {t("content.bannersColPeriod")}
                 </th>
                 <th className="py-3 px-4 text-[11px] font-semibold text-mordobo-textMuted uppercase tracking-wider">
-                  Actions
+                  {t("common.actions")}
                 </th>
               </tr>
             </thead>
@@ -290,7 +291,7 @@ export function BannersSection() {
                         className="w-16 h-10 object-cover rounded-lg bg-mordobo-surface"
                       />
                     ) : (
-                      <span className="text-mordobo-textMuted text-xs">No image</span>
+                      <span className="text-mordobo-textMuted text-xs">{t("content.bannerNoImage")}</span>
                     )}
                   </td>
                   <td className="py-3 px-4">
@@ -303,13 +304,13 @@ export function BannersSection() {
                   </td>
                   <td className="py-3 px-4">
                     <Badge color={STATUS_COLORS[(banner.status as ContentStatus) ?? "draft"]}>
-                      {STATUS_LABELS[(banner.status as ContentStatus) ?? "draft"]}
+                      {statusLabel((banner.status as ContentStatus) ?? "draft")}
                     </Badge>
                   </td>
                   <td className="py-3 px-4 text-sm text-mordobo-textSecondary">{banner.order ?? 0}</td>
                   <td className="py-3 px-4 text-xs text-mordobo-textMuted">
                     {banner.start_at || banner.end_at
-                      ? `${banner.start_at ? new Date(banner.start_at).toLocaleDateString() : "—"} / ${banner.end_at ? new Date(banner.end_at).toLocaleDateString() : "—"}`
+                      ? `${banner.start_at ? new Date(banner.start_at).toLocaleDateString(i18n.language) : "—"} / ${banner.end_at ? new Date(banner.end_at).toLocaleDateString(i18n.language) : "—"}`
                       : "—"}
                   </td>
                   <td className="py-3 px-4">
@@ -336,7 +337,7 @@ export function BannersSection() {
         </div>
         {banners.length === 0 && (
           <div className="py-12 text-center text-mordobo-textSecondary text-sm">
-            No banners yet. Add one to get started.
+            {t("content.bannersEmpty")}
           </div>
         )}
       </div>
