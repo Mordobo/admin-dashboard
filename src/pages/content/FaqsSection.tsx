@@ -15,13 +15,25 @@ import {
   deleteFaqAnswer,
 } from "@/services/contentService";
 import type { ContentStatus } from "@/types";
+import { prefersSpanishLanguage } from "@/utils/adminLocale";
 
 const STATUS_OPTIONS: ContentStatus[] = ["draft", "published"];
-const STATUS_LABELS: Record<ContentStatus, string> = { draft: "Draft", published: "Published" };
 const STATUS_COLORS: Record<ContentStatus, "warning" | "success"> = { draft: "warning", published: "success" };
 
+function pickFaqLocalized(preferEs: boolean, fallback: string, en?: string | null, es?: string | null): string {
+  const a = (en ?? "").trim();
+  const b = (es ?? "").trim();
+  if (preferEs) return b || a || fallback;
+  return a || b || fallback;
+}
+
 export function FaqsSection() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const preferEs = prefersSpanishLanguage(i18n.resolvedLanguage ?? i18n.language);
+  const statusLabel = (s: ContentStatus) =>
+    s === "draft"
+      ? t("content.statusDraft", { defaultValue: "Draft" })
+      : t("content.statusPublished", { defaultValue: "Published" });
   const queryClient = useQueryClient();
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -225,7 +237,7 @@ export function FaqsSection() {
               >
                 {STATUS_OPTIONS.map((s) => (
                   <option key={s} value={s}>
-                    {STATUS_LABELS[s]}
+                    {statusLabel(s)}
                   </option>
                 ))}
               </select>
@@ -274,14 +286,14 @@ export function FaqsSection() {
                 </span>
                 <div className="min-w-0">
                   <div className="font-medium text-mordobo-text truncate">
-                    {cat.title_en || cat.title_es || "Untitled category"}
+                    {pickFaqLocalized(preferEs, "Untitled category", cat.title_en, cat.title_es)}
                   </div>
                   <div className="text-xs text-mordobo-textMuted">
                     {(cat.questions?.length ?? 0)} question(s)
                   </div>
                 </div>
                 <Badge color={STATUS_COLORS[cat.status ?? "draft"]}>
-                  {STATUS_LABELS[(cat.status as ContentStatus) ?? "draft"]}
+                  {statusLabel((cat.status as ContentStatus) ?? "draft")}
                 </Badge>
               </div>
               <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -368,7 +380,7 @@ export function FaqsSection() {
                     >
                       {STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s}>
-                          {STATUS_LABELS[s]}
+                          {statusLabel(s)}
                         </option>
                       ))}
                     </select>
@@ -486,7 +498,7 @@ export function FaqsSection() {
                       <>
                         <div className="flex items-start justify-between gap-2">
                           <p className="font-medium text-mordobo-text m-0">
-                            {q.question_en || q.question_es || "Untitled question"}
+                            {pickFaqLocalized(preferEs, "Untitled question", q.question_en, q.question_es)}
                           </p>
                           <div className="flex gap-2 shrink-0">
                             <button
@@ -561,7 +573,7 @@ export function FaqsSection() {
                               ) : (
                                 <>
                                   <p className="text-mordobo-textSecondary text-sm m-0">
-                                    {ans.answer_en || ans.answer_es || "No answer"}
+                                    {pickFaqLocalized(preferEs, "No answer", ans.answer_en, ans.answer_es)}
                                   </p>
                                   <div className="flex gap-2 shrink-0">
                                     <button
