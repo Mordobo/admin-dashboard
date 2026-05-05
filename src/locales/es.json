@@ -413,7 +413,13 @@
     "statusPending": "Pendiente",
     "statusInReview": "En revisión",
     "statusApproved": "Aprobada",
-    "statusRejected": "Rechazada"
+    "statusRejected": "Rechazada",
+    "activityEvents": {
+      "notes_saved": "Notas guardadas",
+      "checklist_updated": "Lista de revisión actualizada",
+      "approved": "Solicitud aprobada",
+      "rejected": "Solicitud rechazada"
+    }
   },
   "complaints": {
     "backToList": "← Volver al listado",

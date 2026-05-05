@@ -10,20 +10,13 @@ import {
   deleteCategoryOrSubcategory,
 } from "@/services/categoriesService";
 import type { ServiceCatalogCategory, ServiceCatalogSubcategory, CreateCategoryPayload } from "@/types";
+import { catalogItemDisplayName, prefersSpanishLanguage } from "@/utils/adminLocale";
 
 const QUERY_KEY = ["admin-categories-tree"];
 
-function displayName(
-  cat: { name_en?: string | null; name_es?: string | null; name?: string },
-  preferEs: boolean,
-) {
-  if (preferEs) return cat.name_es || cat.name_en || cat.name || "—";
-  return cat.name_en || cat.name_es || cat.name || "—";
-}
-
 export function ServicesCategories() {
   const { t, i18n } = useTranslation();
-  const preferEs = (i18n.language ?? "").startsWith("es");
+  const preferEs = prefersSpanishLanguage(i18n.resolvedLanguage ?? i18n.language);
   const queryClient = useQueryClient();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [formMode, setFormMode] = useState<"none" | "category" | "subcategory">("none");
@@ -320,7 +313,7 @@ export function ServicesCategories() {
                   <span className="text-mordobo-textMuted">{expandedId === cat.id ? "▼" : "▶"}</span>
                   {cat.icon && <span className="text-lg">{cat.icon}</span>}
                   <div className="min-w-0">
-                    <div className="font-medium text-mordobo-text truncate">{displayName(cat, preferEs)}</div>
+                    <div className="font-medium text-mordobo-text truncate">{catalogItemDisplayName(t, cat, preferEs)}</div>
                     <div className="text-xs text-mordobo-textMuted">
                       {t("servicesCategories.providerCount", { count: cat.provider_count ?? 0 })}
                     </div>
@@ -401,7 +394,7 @@ export function ServicesCategories() {
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             {sub.icon && <span>{sub.icon}</span>}
-                            <span className="font-medium text-mordobo-text truncate">{displayName(sub, preferEs)}</span>
+                            <span className="font-medium text-mordobo-text truncate">{catalogItemDisplayName(t, sub, preferEs)}</span>
                             <span className="text-xs text-mordobo-textMuted">
                               {t("servicesCategories.providerCount", { count: sub.provider_count ?? 0 })}
                             </span>

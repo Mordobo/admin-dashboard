@@ -413,7 +413,13 @@
     "statusPending": "Pending",
     "statusInReview": "In review",
     "statusApproved": "Approved",
-    "statusRejected": "Rejected"
+    "statusRejected": "Rejected",
+    "activityEvents": {
+      "notes_saved": "Notes saved",
+      "checklist_updated": "Review checklist updated",
+      "approved": "Application approved",
+      "rejected": "Application rejected"
+    }
   },
   "complaints": {
     "backToList": "← Back to list",
