@@ -413,7 +413,13 @@
     "statusPending": "Pending",
     "statusInReview": "In review",
     "statusApproved": "Approved",
-    "statusRejected": "Rejected"
+    "statusRejected": "Rejected",
+    "activityEvents": {
+      "notes_saved": "Notes saved",
+      "checklist_updated": "Review checklist updated",
+      "approved": "Application approved",
+      "rejected": "Application rejected"
+    }
   },
   "complaints": {
     "backToList": "← Back to list",
@@ -813,6 +819,9 @@
       "closeModal": "Close",
       "actions": {
         "admin_invited": "Backoffice admin invited",
+        "backoffice_admin_status_updated": "Backoffice admin status changed",
+        "backoffice_admin_role_updated": "Backoffice admin role changed",
+        "backoffice_admin_deleted": "Backoffice admin removed",
         "user_deleted": "User deleted",
         "user_password_reset_triggered": "Password reset triggered",
         "user_notification_sent": "Notification sent",
@@ -822,12 +831,18 @@
         "client": "Client",
         "provider": "Provider",
         "admin": "Admin",
+        "backoffice_admin": "Backoffice admin",
         "booking": "Booking",
         "service": "Service",
         "category": "Category"
       },
       "details": {
         "user_status_updated_prefix": "Status changed to",
+        "backoffice_admin_status_prefix": "Status",
+        "backoffice_admin_status_arrow": "→",
+        "backoffice_admin_role_prefix": "Role",
+        "backoffice_admin_role_arrow": "→",
+        "backoffice_admin_deleted": "Administrator permanently removed from the backoffice.",
         "user_notification_sent": "Subject: \"{{subject}}\"",
         "user_password_reset_triggered": "Password reset email sent to user",
         "user_deleted": "Account soft-deleted",

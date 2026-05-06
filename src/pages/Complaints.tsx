@@ -14,7 +14,7 @@ import {
   refundComplaint,
   updateComplaint,
 } from "@/services/complaintsService";
-import type { Complaint, ComplaintDetail, ComplaintMessage, ComplaintStatus } from "@/types";
+import type { ComplaintDetail, ComplaintMessage, ComplaintStatus } from "@/types";
 import type { TFunction } from "i18next";
 import { normalizeEnumKey, translateDashboardUserRole } from "@/utils/adminLocale";
 

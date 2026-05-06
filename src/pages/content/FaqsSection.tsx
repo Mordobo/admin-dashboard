@@ -16,6 +16,7 @@ import {
   deleteFaqAnswer,
 } from "@/services/contentService";
 import type { ContentStatus, FaqAudience } from "@/types";
+import { prefersSpanishLanguage } from "@/utils/adminLocale";
 
 const FAQ_AUDIENCES: FaqAudience[] = ["client", "provider", "all"];
 
@@ -36,21 +37,20 @@ function getApiErrorMessage(error: unknown): string {
 const STATUS_OPTIONS: ContentStatus[] = ["draft", "published"];
 const STATUS_COLORS: Record<ContentStatus, "warning" | "success"> = { draft: "warning", published: "success" };
 
-function localizedFaqText(
-  preferEs: boolean,
-  en?: string | null,
-  es?: string | null,
-  fallback: string,
-): string {
-  if (preferEs) return (es || en || fallback).trim() || fallback;
-  return (en || es || fallback).trim() || fallback;
+function pickFaqLocalized(preferEs: boolean, fallback: string, en?: string | null, es?: string | null): string {
+  const a = (en ?? "").trim();
+  const b = (es ?? "").trim();
+  if (preferEs) return b || a || fallback;
+  return a || b || fallback;
 }
 
 export function FaqsSection() {
   const { t, i18n } = useTranslation();
-  const preferEs = (i18n.language ?? "").startsWith("es");
+  const preferEs = prefersSpanishLanguage(i18n.resolvedLanguage ?? i18n.language);
   const statusLabel = (s: ContentStatus) =>
-    s === "draft" ? t("content.statusDraft") : t("content.statusPublished");
+    s === "draft"
+      ? t("content.statusDraft", { defaultValue: "Draft" })
+      : t("content.statusPublished", { defaultValue: "Published" });
   const audienceLabel = (a: FaqAudience) => t(`content.faqAudienceOptions.${a}`);
   const queryClient = useQueryClient();
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
@@ -350,7 +350,12 @@ export function FaqsSection() {
                 </span>
                 <div className="min-w-0">
                   <div className="font-medium text-mordobo-text truncate">
-                    {localizedFaqText(preferEs, cat.title_en, cat.title_es, t("content.untitledCategory"))}
+                    {pickFaqLocalized(
+                      preferEs,
+                      t("content.untitledCategory", { defaultValue: "Untitled category" }),
+                      cat.title_en,
+                      cat.title_es,
+                    )}
                   </div>
                   <div className="text-xs text-mordobo-textMuted">
                     {t("content.faqQuestionCount", { count: cat.questions?.length ?? 0 })}
@@ -658,11 +663,11 @@ export function FaqsSection() {
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <p className="font-medium text-mordobo-text m-0">
-                              {localizedFaqText(
+                              {pickFaqLocalized(
                                 preferEs,
+                                t("content.untitledQuestion", { defaultValue: "Untitled question" }),
                                 q.question_en,
                                 q.question_es,
-                                t("content.untitledQuestion"),
                               )}
                             </p>
                             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -765,7 +770,7 @@ export function FaqsSection() {
                               ) : (
                                 <>
                                   <p className="text-mordobo-textSecondary text-sm m-0">
-                                    {ans.answer_en || ans.answer_es || "No answer"}
+                                    {pickFaqLocalized(preferEs, "No answer", ans.answer_en, ans.answer_es)}
                                   </p>
                                   <div className="flex gap-2 shrink-0">
                                     <button

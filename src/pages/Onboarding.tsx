@@ -73,7 +73,6 @@ export function Onboarding() {
     (raw: string | null | undefined) => translateFreeformCatalogName(t, raw),
     [t]
   );
-
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
