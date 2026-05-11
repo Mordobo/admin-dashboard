@@ -100,6 +100,7 @@
       "specialized_installations": "Specialized Installations",
       "domestic_services": "Domestic Services",
       "other_services": "Other Services",
+      "jobscounter": "Jobscounter",
       "plumbing": "Plumbing",
       "electrical": "Electrical",
       "carpentry": "Carpentry",
@@ -646,7 +647,11 @@
       "pending": "Pending",
       "in_progress": "In progress",
       "pending_review": "Pending review",
-      "failed": "Failed"
+      "failed": "Failed",
+      "pending_for_provider": "Awaiting provider",
+      "pending_for_client": "Awaiting client",
+      "pending_payment": "Pending payment",
+      "accepted": "Accepted"
     },
     "verifiedBadgeTitle": "Verified",
     "featuredBadgeTitle": "Featured"
