@@ -100,6 +100,7 @@
       "specialized_installations": "Instalaciones especializadas",
       "domestic_services": "Servicios domésticos",
       "other_services": "Otros servicios",
+      "jobscounter": "Jobscounter (servicio interno)",
       "plumbing": "Fontanería",
       "electrical": "Electricidad",
       "carpentry": "Carpintería",
@@ -646,7 +647,11 @@
       "pending": "Pendiente",
       "in_progress": "En curso",
       "pending_review": "Pendiente de revisión",
-      "failed": "Fallido"
+      "failed": "Fallido",
+      "pending_for_provider": "Pendiente de proveedor",
+      "pending_for_client": "Pendiente del cliente",
+      "pending_payment": "Pendiente de pago",
+      "accepted": "Aceptado"
     },
     "verifiedBadgeTitle": "Verificado",
     "featuredBadgeTitle": "Destacado"

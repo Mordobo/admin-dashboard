@@ -58,7 +58,11 @@ export function catalogItemDisplayName(t: TFunction, item: CatalogNamed, preferE
   const fromFields = localizedCatalogName(item, preferEs);
   const keysToTry: string[] = [];
   const nk = item.name_key?.trim();
-  if (nk) keysToTry.push(`catalog.names.${nk}`);
+  if (nk) {
+    keysToTry.push(`catalog.names.${nk}`);
+    const nkUnderscored = nk.replace(/-/g, "_");
+    if (nkUnderscored !== nk) keysToTry.push(`catalog.names.${nkUnderscored}`);
+  }
   const fromEnOrName = slugifyCatalogLabel(item.name_en?.trim() || item.name?.trim() || "");
   if (fromEnOrName) keysToTry.push(`catalog.names.${fromEnOrName}`);
   const fromDisplay = slugifyCatalogLabel(fromFields);
